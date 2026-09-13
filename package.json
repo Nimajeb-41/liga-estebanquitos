@@ -42,7 +42,7 @@
     "liga": "node --env-file=.env apps/api/src/index.ts",
     "diagnostico": "node scripts/diagnostico.mjs",
     "web": "node --env-file=.env apps/web/dist/server/entry.mjs",
-    "tunel": "cloudflared tunnel --url http://127.0.0.1:4321 --no-autoupdate"
+    "tunel": "node scripts/tunel.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
