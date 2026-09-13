@@ -28,6 +28,19 @@ export default defineConfig({
    * la cabecera `X-Frame-Options` del middleware.
    */
   security: {
+    /*
+      La comprobación de origen la hace la aplicación, no Astro.
+
+      La de Astro compara la cabecera `Origin` con la URL que el proceso deduce
+      de la conexión. Detrás de un proxy —y esta liga se sirve por un túnel— esa
+      URL es la interna (`http://127.0.0.1:4321`), nunca la pública, así que
+      rechazaría todos los formularios del panel.
+
+      Las dos únicas rutas que escriben (`/api/session` y `/api/admin/...`)
+      comprueban el origen contra `PUBLIC_SITE_URL`, que sí sabe cómo llega la
+      gente. Ver `src/lib/api/origin.ts`.
+    */
+    checkOrigin: false,
     csp: {
       directives: [
         "default-src 'self'",

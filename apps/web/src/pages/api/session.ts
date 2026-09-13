@@ -15,6 +15,7 @@
 import type { APIRoute } from 'astro';
 
 import { apiBaseUrl, request } from '../../lib/api/client.ts';
+import { mismoOrigen } from '../../lib/api/origin.ts';
 import {
   clearSession,
   sessionHeader,
@@ -30,19 +31,12 @@ function safeNext(value: FormDataEntryValue | null): string {
   return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/admin';
 }
 
-/** Rechaza envíos que no vengan de este mismo sitio. */
-function sameOrigin(incoming: Request, siteOrigin: string): boolean {
-  const origin = incoming.headers.get('origin');
-  if (origin === null) return true; // Un `<form>` clásico puede no enviarla.
-  return origin === siteOrigin;
-}
-
 function redirect(location: string): Response {
   return new Response(null, { status: 303, headers: { location } });
 }
 
 export const POST: APIRoute = async ({ request: incoming, cookies, url, clientAddress }) => {
-  if (!sameOrigin(incoming, url.origin)) {
+  if (!mismoOrigen(incoming, url.origin)) {
     return new Response('Origen no permitido.', { status: 403 });
   }
 

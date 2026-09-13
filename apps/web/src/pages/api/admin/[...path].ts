@@ -18,6 +18,7 @@
  * módulo se limita a devolver su respuesta tal cual, incluidos los errores.
  */
 
+import { mismoOrigen } from '../../../lib/api/origin.ts';
 import type { APIRoute } from 'astro';
 
 import { ApiError, ApiUnreachableError, request } from '../../../lib/api/client.ts';
@@ -42,8 +43,7 @@ async function forward(
 ): Promise<Response> {
   const { params, cookies, url, request: incoming, clientAddress } = context;
 
-  const origin = incoming.headers.get('origin');
-  if (origin !== null && origin !== url.origin) {
+  if (!mismoOrigen(incoming, url.origin)) {
     return json({ error: { code: 'FORBIDDEN', message: 'Origen no permitido.' } }, 403);
   }
 
