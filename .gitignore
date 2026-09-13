@@ -13,3 +13,6 @@ evidence/
 
 # Base de datos local: son los datos de la liga, no codigo.
 /datos/
+
+# Registros efimeros del tunel y del servidor. No son codigo.
+/.tmp/
