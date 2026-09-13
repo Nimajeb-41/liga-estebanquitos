@@ -39,7 +39,8 @@
     "test:e2e": "node scripts/e2e.mjs",
     "audit:indexes": "node scripts/audit-indexes.mjs",
     "api": "node --env-file=.env apps/api/src/index.ts",
-    "liga": "node --env-file=.env apps/api/src/index.ts"
+    "liga": "node --env-file=.env apps/api/src/index.ts",
+    "diagnostico": "node scripts/diagnostico.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
