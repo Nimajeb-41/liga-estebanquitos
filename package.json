@@ -40,7 +40,9 @@
     "audit:indexes": "node scripts/audit-indexes.mjs",
     "api": "node --env-file=.env apps/api/src/index.ts",
     "liga": "node --env-file=.env apps/api/src/index.ts",
-    "diagnostico": "node scripts/diagnostico.mjs"
+    "diagnostico": "node scripts/diagnostico.mjs",
+    "web": "node --env-file=.env apps/web/dist/server/entry.mjs",
+    "tunel": "cloudflared tunnel --url http://127.0.0.1:4321 --no-autoupdate"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
