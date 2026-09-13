@@ -1,0 +1,87 @@
+---
+/**
+ * Catálogo de cartas y uso observado.
+ *
+ * Todo lo de esta página es **observado**, no oficial. Es lo que apareció en
+ * las batallas que la API devolvió, que son una ventana estrecha y sesgada
+ * hacia lo reciente. Por eso cada cifra viaja con el tamaño de la muestra.
+ *
+ * «Usa esta carta el 80 % de las veces» sería falso. «Apareció en 8 de los 10
+ * mazos observados» es lo que se puede afirmar, y es lo que se dice.
+ */
+import type { ObservedCardStatistics, TournamentOverview } from '@liga/contracts';
+
+import { CardCatalogue } from '../components/clash/CardCatalogue.tsx';
+import OfficialBadge from '../components/statistics/OfficialBadge.astro';
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { EmptyState, Panel } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getObservedCards, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+let cards: ObservedCardStatistics | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [cards, overview] = await Promise.all([getObservedCards(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const meta = pageMeta({
+  title: 'Cartas',
+  description:
+    'Cartas observadas en las batallas de la Liga Estabanquitos 2026-1, con su frecuencia de aparición. Datos observados, no oficiales.',
+  pathname: '/cartas',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Cartas"
+    description="Lo que se vio en las batallas que devolvió Clash Royale. No es todo lo que han jugado: es lo que se pudo observar."
+    level={1}
+  >
+    <OfficialBadge slot="action" source="OBSERVED" sampleSize={cards?.sampleSize ?? 0} />
+  </SectionHeading>
+
+  {
+    failure !== null || cards === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : cards.value.cards.length === 0 ? (
+      <div class="space-y-6">
+        <EmptyState
+          title="Todavía no hay batallas observadas"
+          description="Cuando administración sincronice el historial de algún participante y confirme una batalla, sus cartas aparecerán aquí."
+        />
+        <Panel as="aside">
+          <h2 class="font-display text-base font-semibold">Por qué está vacío</h2>
+          <p class="mt-2 text-sm text-muted">
+            Estas cifras no salen del reglamento ni de los resultados: salen del historial de
+            batallas de Clash Royale, que hay que traer a mano desde el panel. Mientras no se traiga
+            ninguna, no hay nada honesto que contar.
+          </p>
+        </Panel>
+      </div>
+    ) : (
+      <div class="space-y-6">
+        <div class="rounded-panel border border-line-strong bg-elevated px-4 py-3 text-sm">
+          <p class="font-medium">
+            Basado en {cards.value.sampleSize}{' '}
+            {cards.value.sampleSize === 1 ? 'mazo observado' : 'mazos observados'}, de{' '}
+            {cards.value.battles} {cards.value.battles === 1 ? 'batalla' : 'batallas'}.
+          </p>
+          <p class="mt-1 text-muted">
+            Con una muestra pequeña, una carta puede parecer dominante solo porque alguien la usó
+            dos veces seguidas. No es un ranking del metajuego, y no pretende serlo.
+          </p>
+        </div>
+
+        <CardCatalogue cards={cards.value.cards} sampleSize={cards.value.sampleSize} client:load />
+      </div>
+    )
+  }
+</Public>

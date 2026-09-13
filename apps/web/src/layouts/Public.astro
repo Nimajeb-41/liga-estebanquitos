@@ -1,0 +1,41 @@
+---
+/**
+ * Layout de las páginas públicas: cabecera, contenido y pie.
+ *
+ * El hueco de la barra inferior de móvil se reserva con `pb-20`, para que la
+ * navegación no tape el final de la página.
+ */
+import Footer from '../components/layout/Footer.astro';
+import Header from '../components/layout/Header.astro';
+import MobileNav from '../components/layout/MobileNav.astro';
+import type { PageMeta } from '../lib/seo.ts';
+import Base from './Base.astro';
+
+interface Props {
+  meta: PageMeta;
+  rulesVersion?: string | null;
+  /** El contenido a ancho completo lo usa la portada; el resto va contenido. */
+  wide?: boolean;
+}
+
+const { meta, rulesVersion = null, wide = false } = Astro.props;
+---
+
+<Base meta={meta}>
+  <div class="flex min-h-screen flex-col">
+    <Header />
+    <main id="contenido" class="flex-1 pb-20 md:pb-0">
+      {
+        wide ? (
+          <slot />
+        ) : (
+          <div class="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+            <slot />
+          </div>
+        )
+      }
+    </main>
+    <Footer rulesVersion={rulesVersion} />
+    <MobileNav />
+  </div>
+</Base>

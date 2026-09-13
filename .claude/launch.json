@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "liga-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "liga"],
+      "port": 3000
+    },
+    {
+      "name": "liga-api-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "demo"],
+      "port": 3000
+    },
+    {
+      "name": "liga-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=@liga/web"],
+      "port": 4321
+    }
+  ]
+}

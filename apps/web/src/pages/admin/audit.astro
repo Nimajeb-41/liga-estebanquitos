@@ -1,0 +1,11 @@
+---
+/**
+ * Dirección antigua de la auditoría.
+ *
+ * La pantalla vive ahora en `/admin/auditoria`, en español como el resto del
+ * sitio. Esto se queda porque el enlace anterior puede estar pegado en algún
+ * mensaje o guardado en un marcador, y un 404 en la pantalla de auditoría es
+ * justo lo que no se quiere encontrar cuando algo ha ido mal.
+ */
+return Astro.redirect('/admin/auditoria', 308);
+---

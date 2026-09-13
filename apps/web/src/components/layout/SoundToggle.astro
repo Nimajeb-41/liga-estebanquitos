@@ -1,0 +1,65 @@
+---
+/**
+ * Interruptor de sonido.
+ *
+ * Empieza apagado siempre. Una web que suena sin que nadie se lo pida es una web
+ * que se cierra, y el navegador además no deja arrancar audio sin un gesto: el
+ * clic en este botón **es** ese gesto.
+ *
+ * El estado se refleja en `aria-pressed`, que es lo que un lector de pantalla
+ * anuncia. El icono acompaña; no sustituye.
+ */
+import { Volume2, VolumeX } from 'lucide-react';
+---
+
+<button
+  type="button"
+  id="sfx-toggle"
+  aria-pressed="false"
+  class="inline-flex size-9 items-center justify-center rounded-md border border-line text-muted transition-colors hover:border-cyan/50 hover:text-cyan"
+  title="Efectos de sonido"
+>
+  <span class="sr-only">Activar efectos de sonido</span>
+  <span data-sfx-on hidden>
+    <Volume2 aria-hidden="true" className="size-4" />
+  </span>
+  <span data-sfx-off>
+    <VolumeX aria-hidden="true" className="size-4" />
+  </span>
+</button>
+
+<script>
+  import { isEnabled, setEnabled } from '../../scripts/sfx.ts';
+
+  function wire(): void {
+    const button = document.getElementById('sfx-toggle');
+    if (button === null || button.dataset['wired'] === 'yes') return;
+    button.dataset['wired'] = 'yes';
+
+    const paint = (on: boolean): void => {
+      button.setAttribute('aria-pressed', String(on));
+      const label = button.querySelector('.sr-only');
+      if (label !== null) {
+        label.textContent = on ? 'Desactivar efectos de sonido' : 'Activar efectos de sonido';
+      }
+      button.querySelector<HTMLElement>('[data-sfx-on]')?.toggleAttribute('hidden', !on);
+      button.querySelector<HTMLElement>('[data-sfx-off]')?.toggleAttribute('hidden', on);
+    };
+
+    button.addEventListener('click', () => {
+      const next = !isEnabled();
+      setEnabled(next);
+      paint(next);
+    });
+
+    paint(isEnabled());
+  }
+
+  wire();
+  /*
+    Con transiciones de vista la cabecera se reemplaza en cada navegación, así
+    que el botón nuevo hay que volver a engancharlo. La guarda `data-wired`
+    evita duplicar el oyente si esto corriera dos veces.
+  */
+  document.addEventListener('astro:page-load', wire);
+</script>

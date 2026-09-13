@@ -1,0 +1,103 @@
+---
+/**
+ * Acceso al panel.
+ *
+ * Formulario HTML normal: funciona sin JavaScript. La contraseña no pasa por
+ * ningún componente de cliente ni se guarda en ningún sitio del navegador.
+ */
+import { CircleAlert } from 'lucide-react';
+
+import Brand from '../../components/layout/Brand.astro';
+import { currentSession } from '../../lib/api/session.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import Base from '../../layouts/Base.astro';
+
+// Con sesión válida no hay nada que hacer aquí.
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session !== null) return Astro.redirect('/admin');
+
+const params = Astro.url.searchParams;
+const next = params.get('next') ?? '/admin';
+const error = params.get('error');
+
+const ERRORS: Readonly<Record<string, string>> = {
+  credenciales: 'Correo o contraseña incorrectos.',
+  limite: 'Demasiados intentos seguidos. Espera unos minutos antes de volver a probar.',
+  api: 'No se pudo contactar con el servidor de la liga.',
+  'sin-sesion': 'El servidor no devolvió una sesión válida. Inténtalo de nuevo.',
+  error: 'No se pudo iniciar sesión.',
+};
+
+const meta = pageMeta({
+  title: 'Acceso',
+  description: 'Acceso al panel de administración de la Liga Estabanquitos 2026-1.',
+  pathname: '/admin/login',
+  noindex: true,
+});
+---
+
+<Base meta={meta}>
+  <main id="contenido" class="flex min-h-screen items-center justify-center px-4 py-12">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 flex justify-center">
+        <Brand href="/" />
+      </div>
+
+      <div class="panel p-6">
+        <h1 class="font-display text-xl font-semibold">Administración</h1>
+        <p class="mt-1 text-sm text-muted">Acceso restringido al equipo de la liga.</p>
+
+        {
+          error === null ? null : (
+            <p
+              role="alert"
+              class="mt-4 flex items-start gap-2 rounded-md border border-danger/50 bg-danger/5 px-3 py-2 text-sm text-danger"
+            >
+              <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+              {ERRORS[error] ?? ERRORS['error']}
+            </p>
+          )
+        }
+
+        <form method="post" action="/api/session" class="mt-6 space-y-4">
+          <input type="hidden" name="next" value={next} />
+
+          <div>
+            <label for="email" class="mb-1.5 block text-sm font-medium">Correo</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="username"
+              required
+              class="min-h-11 w-full rounded-lg border border-line bg-elevated px-3 text-sm text-ink placeholder:text-faint focus:border-cyan focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label for="password" class="mb-1.5 block text-sm font-medium">Contraseña</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              class="min-h-11 w-full rounded-lg border border-line bg-elevated px-3 text-sm text-ink focus:border-cyan focus:outline-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-cyan/60 bg-cyan/15 px-4 text-sm font-semibold text-cyan transition-colors hover:bg-cyan/25"
+          >
+            Entrar
+          </button>
+        </form>
+      </div>
+
+      <p class="mt-6 text-center text-xs text-faint">
+        <a href="/" class="underline-offset-2 hover:underline">Volver al sitio público</a>
+      </p>
+    </div>
+  </main>
+</Base>

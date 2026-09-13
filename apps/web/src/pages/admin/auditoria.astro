@@ -1,0 +1,233 @@
+---
+/**
+ * Auditoría.
+ *
+ * Quién hizo qué, cuándo y sobre qué. Es una pieza central del proyecto: si la
+ * clasificación cambia, aquí está la razón.
+ *
+ * Dos decisiones que no son de estilo:
+ *
+ * 1. **Los filtros son un formulario GET normal**, no un componente. Funcionan
+ *    sin JavaScript, cada búsqueda tiene su URL —que se puede pegar en un
+ *    mensaje— y el navegador conserva el historial. Un panel de auditoría se usa
+ *    justamente cuando algo ha ido mal; no es el momento de depender de que
+ *    hidrate una isla.
+ *
+ * 2. **Se filtra en la base de datos.** Traerse el registro entero para
+ *    filtrarlo aquí enviaría de paso los motivos de cada corrección y las notas
+ *    internas de cada aplazamiento. Lo que no se pide, no se manda.
+ */
+import type { AuditPage } from '@liga/contracts';
+
+import { AuditLog } from '../../components/admin/AuditLog.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { Button } from '../../components/ui/primitives.tsx';
+import { getAuditPage } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession, sessionHeader } from '../../lib/api/session.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/auditoria');
+
+const query = Astro.url.searchParams;
+
+/** Un parámetro solo viaja si trae algo: `?action=` no es un filtro. */
+function param(name: string): string | undefined {
+  const value = query.get(name)?.trim();
+  return value === undefined || value === '' ? undefined : value;
+}
+
+/**
+ * `datetime-local` da `2026-09-10T14:30`, sin zona. Se completa con la del
+ * servidor, que es la misma con la que se guardó cada entrada.
+ */
+function toIso(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+const raw = {
+  action: param('action'),
+  actorAdminId: param('actorAdminId'),
+  entityType: param('entityType'),
+  entityId: param('entityId'),
+  requestId: param('requestId'),
+  since: param('since'),
+  until: param('until'),
+  limit: param('limit'),
+};
+
+const filters: Record<string, string> = {};
+for (const [key, value] of Object.entries(raw)) {
+  if (value === undefined) continue;
+  const resolved = key === 'since' || key === 'until' ? toIso(value) : value;
+  if (resolved !== undefined) filters[key] = resolved;
+}
+
+const active = Object.keys(filters).length;
+
+let page: AuditPage | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  page = await getAuditPage(filters, { cookie: sessionHeader(Astro.cookies) });
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const field =
+  'min-h-11 w-full rounded-lg border border-line bg-elevated px-3 text-sm text-ink placeholder:text-faint focus:border-cyan focus:outline-none';
+const labelClass = 'mb-1.5 block text-xs text-faint';
+---
+
+<Admin
+  title="Auditoría"
+  description="Quién hizo qué, cuándo y sobre qué. No se puede editar ni borrar ninguna entrada."
+  session={session}
+>
+  {
+    failure !== null || page === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-5">
+        <form method="get" class="panel space-y-4 p-5">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label for="f-action" class={labelClass}>
+                Acción
+              </label>
+              <select id="f-action" name="action" class={field}>
+                <option value="">Todas</option>
+                {page.facets.actions.map((entry) => (
+                  <option value={entry.value} selected={raw.action === entry.value}>
+                    {entry.value} ({entry.total})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label for="f-actor" class={labelClass}>
+                Responsable
+              </label>
+              <select id="f-actor" name="actorAdminId" class={field}>
+                <option value="">Cualquiera</option>
+                {page.facets.actors.map((actor) => (
+                  <option value={actor.id} selected={raw.actorAdminId === actor.id}>
+                    {actor.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label for="f-entity" class={labelClass}>
+                Tipo de entidad
+              </label>
+              <select id="f-entity" name="entityType" class={field}>
+                <option value="">Cualquiera</option>
+                {page.facets.entityTypes.map((type) => (
+                  <option value={type} selected={raw.entityType === type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label for="f-entity-id" class={labelClass}>
+                Identificador de entidad
+              </label>
+              <input
+                id="f-entity-id"
+                name="entityId"
+                type="text"
+                value={raw.entityId ?? ''}
+                placeholder="id del partido, jugador…"
+                class={field}
+              />
+            </div>
+
+            <div>
+              <label for="f-since" class={labelClass}>
+                Desde
+              </label>
+              <input
+                id="f-since"
+                name="since"
+                type="datetime-local"
+                value={raw.since ?? ''}
+                class={field}
+              />
+            </div>
+
+            <div>
+              <label for="f-until" class={labelClass}>
+                Hasta
+              </label>
+              <input
+                id="f-until"
+                name="until"
+                type="datetime-local"
+                value={raw.until ?? ''}
+                class={field}
+              />
+            </div>
+
+            <div>
+              <label for="f-request" class={labelClass}>
+                Petición
+              </label>
+              <input
+                id="f-request"
+                name="requestId"
+                type="text"
+                value={raw.requestId ?? ''}
+                placeholder="requestId del registro"
+                class={field}
+              />
+            </div>
+
+            <div>
+              <label for="f-limit" class={labelClass}>
+                Cuántas
+              </label>
+              <select id="f-limit" name="limit" class={field}>
+                {['50', '200', '500', '1000'].map((size) => (
+                  <option value={size} selected={(raw.limit ?? '200') === size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
+            <Button type="submit">Filtrar</Button>
+            {active > 0 ? (
+              <a
+                href="/admin/auditoria"
+                class="text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
+              >
+                Quitar los filtros
+              </a>
+            ) : null}
+            <p role="status" class="ml-auto text-xs text-muted">
+              {page.entries.length} {page.entries.length === 1 ? 'entrada' : 'entradas'}
+              {page.entries.length === page.limit ? ' (tope alcanzado)' : ''}
+            </p>
+          </div>
+
+          <p class="text-xs text-faint">
+            El <code>requestId</code> es el que aparece en los registros del servidor y en las
+            respuestas de error: sirve para cruzar una operación con lo que pasó alrededor.
+          </p>
+        </form>
+
+        <AuditLog entries={page.entries} client:load />
+      </div>
+    )
+  }
+</Admin>

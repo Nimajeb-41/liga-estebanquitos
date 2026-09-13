@@ -1,0 +1,128 @@
+---
+/**
+ * Una jornada.
+ *
+ * Sus cinco partidos con el estado de cada uno, y navegación a la anterior y la
+ * siguiente.
+ */
+import type { RoundWithMatches, TournamentOverview } from '@liga/contracts';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { MatchCard } from '../../components/matches/MatchCard.tsx';
+import { RoundStatusBadge, tally } from '../../components/matches/RoundSummary.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { EmptyState, StatTile } from '../../components/ui/primitives.tsx';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { ApiError } from '../../lib/api/client.ts';
+import { getRound, getTournament } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { formatDate, legLabel, roundLabel } from '../../lib/presentation.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import Public from '../../layouts/Public.astro';
+
+const number = Number(Astro.params.round);
+if (!Number.isInteger(number) || number < 1) {
+  return Astro.redirect('/jornadas', 302);
+}
+
+let round: RoundWithMatches | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [round, overview] = await Promise.all([getRound(number), getTournament()]);
+} catch (error) {
+  if (error instanceof ApiError && error.status === 404) {
+    return new Response(null, { status: 404 });
+  }
+  failure = friendlyError(error);
+}
+
+const total = overview?.format.rounds ?? 0;
+const counts = round === null ? null : tally(round.matches);
+const meta = pageMeta({
+  title: roundLabel(number),
+  description: `Partidos, resultados y estado de la jornada ${number} de la Liga Estabanquitos 2026-1.`,
+  pathname: `/jornadas/${number}`,
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  {
+    failure !== null || round === null || counts === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-8">
+        <div>
+          <p class="flex flex-wrap items-center gap-3">
+            <a href="/jornadas" class="text-xs text-muted underline-offset-2 hover:underline">
+              Jornadas
+            </a>
+            <span class="font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+              {legLabel(round.leg)}
+            </span>
+            <RoundStatusBadge matches={round.matches} />
+          </p>
+          <SectionHeading
+            title={roundLabel(round.number)}
+            description={`Fecha prevista: ${formatDate(round.scheduledAt)}.`}
+            level={1}
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile label="Partidos" value={counts.total} />
+          <StatTile label="Finalizados" value={counts.completed} tone="acid" />
+          <StatTile
+            label="Aplazados"
+            value={counts.postponed}
+            tone={counts.postponed > 0 ? 'warning' : 'neutral'}
+          />
+          <StatTile
+            label="En disputa"
+            value={counts.disputed}
+            tone={counts.disputed > 0 ? 'danger' : 'neutral'}
+          />
+        </div>
+
+        {round.matches.length === 0 ? (
+          <EmptyState title="Esta jornada no tiene partidos" />
+        ) : (
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {round.matches.map((match) => (
+              <MatchCard match={match} />
+            ))}
+          </div>
+        )}
+
+        <nav
+          aria-label="Otras jornadas"
+          class="flex items-center justify-between gap-3 border-t border-line pt-6"
+        >
+          {number > 1 ? (
+            <a
+              href={`/jornadas/${number - 1}`}
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:border-cyan/40 hover:text-ink"
+            >
+              <ChevronLeft aria-hidden="true" className="size-4" />
+              {roundLabel(number - 1)}
+            </a>
+          ) : (
+            <span />
+          )}
+          {number < total ? (
+            <a
+              href={`/jornadas/${number + 1}`}
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:border-cyan/40 hover:text-ink"
+            >
+              {roundLabel(number + 1)}
+              <ChevronRight aria-hidden="true" className="size-4" />
+            </a>
+          ) : (
+            <span />
+          )}
+        </nav>
+      </div>
+    )
+  }
+</Public>

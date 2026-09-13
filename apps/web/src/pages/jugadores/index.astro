@@ -1,0 +1,121 @@
+---
+/**
+ * Participantes.
+ *
+ * Las diez plazas del torneo: las ocupadas con su ficha y su posición, las
+ * libres como huecos declarados.
+ */
+import type { PlayersResponse, PublicPlayer, Standings, TournamentOverview } from '@liga/contracts';
+
+import { EmptySlotCard, PlayerCard } from '../../components/players/PlayerCard.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { StatTile } from '../../components/ui/primitives.tsx';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getPlayers, getStandings, getTournament } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import Public from '../../layouts/Public.astro';
+
+let players: PlayersResponse | null = null;
+let standings: Standings | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [players, standings, overview] = await Promise.all([
+    getPlayers(),
+    getStandings(),
+    getTournament(),
+  ]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const rowOf = (playerId: string) =>
+  standings?.rows.find((row) => row.playerId === playerId) ?? null;
+
+/** Las plazas en orden, con su jugador cuando la tienen ocupada. */
+interface SlotView {
+  readonly slot: number;
+  readonly player: PublicPlayer | null;
+}
+
+const slots: SlotView[] =
+  players === null
+    ? []
+    : players.slots.map((slot) => ({
+        slot: slot.slot,
+        player:
+          slot.player === null
+            ? null
+            : (players.players.find((entry) => entry.id === slot.player?.id) ?? null),
+      }));
+
+/** Inscritos que todavía no ocupan plaza. */
+const unassigned =
+  players === null
+    ? []
+    : players.players.filter((player) => player.slot === null && player.status !== 'REPLACED');
+
+const meta = pageMeta({
+  title: 'Jugadores',
+  description:
+    'Los participantes de la Liga Estabanquitos 2026-1, con su estado, su posición y sus estadísticas.',
+  pathname: '/jugadores',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Jugadores"
+    description="Diez plazas. Las que todavía no están confirmadas se muestran como huecos, no como jugadores."
+    level={1}
+  />
+
+  {
+    failure !== null || players === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-8">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile
+            label="Confirmados"
+            value={players.summary.confirmed}
+            tone={players.summary.complete ? 'acid' : 'warning'}
+          />
+          <StatTile label="Plazas libres" value={players.summary.pending} />
+          <StatTile label="Inscritos" value={players.summary.registered} />
+          <StatTile label="Plantilla" value={players.summary.rosterSize} hint="Tamaño del torneo" />
+        </div>
+
+        <ul class="grid gap-3 md:grid-cols-2">
+          {slots.map((entry) => (
+            <li>
+              {entry.player === null ? (
+                <EmptySlotCard slotNumber={entry.slot} />
+              ) : (
+                <PlayerCard player={entry.player} row={rowOf(entry.player.id)} />
+              )}
+            </li>
+          ))}
+        </ul>
+
+        {unassigned.length === 0 ? null : (
+          <section>
+            <h2 class="mb-3 font-display text-lg font-semibold">Inscritos sin plaza</h2>
+            <p class="mb-4 text-sm text-muted">
+              Están dados de alta pero todavía no ocupan una de las diez plazas del torneo.
+            </p>
+            <ul class="grid gap-3 md:grid-cols-2">
+              {unassigned.map((player) => (
+                <li>
+                  <PlayerCard player={player} row={rowOf(player.id)} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    )
+  }
+</Public>

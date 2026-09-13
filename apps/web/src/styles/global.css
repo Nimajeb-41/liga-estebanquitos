@@ -1,0 +1,375 @@
+@import 'tailwindcss';
+
+/**
+ * Sistema de diseño — Liga Estabanquitos 2026-1.
+ *
+ * Tema cyberpunk esports: negro profundo, neón como acento y paneles
+ * holográficos. El principio que ordena todo: el espectáculo va en los marcos,
+ * nunca en los datos. Un número de la clasificación no brilla ni se mueve.
+ */
+
+@theme {
+  /* Fondos */
+  --color-void: #05060a;
+  --color-panel: #0c0f17;
+  --color-elevated: #141926;
+  --color-raised: #1b2233;
+  --color-line: #232a3d;
+  --color-line-strong: #33405c;
+
+  /* Acentos */
+  --color-cyan: #00e5ff;
+  --color-magenta: #ff2ecc;
+  --color-purple: #8a5cff;
+  --color-acid: #b6ff3b;
+  --color-danger: #ff4d5e;
+  --color-warning: #ffc046;
+
+  /* Texto */
+  --color-ink: #e8ecf5;
+  --color-muted: #8e9ab5;
+  --color-faint: #5d6880;
+
+  /* Metales para el podio */
+  --color-gold: #ffd166;
+  --color-silver: #c8d2e4;
+  --color-bronze: #d99058;
+
+  --font-display: 'Chakra Petch', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+
+  --radius-panel: 14px;
+
+  --shadow-glow-cyan: 0 0 24px -6px color-mix(in srgb, var(--color-cyan) 60%, transparent);
+  --shadow-glow-magenta: 0 0 24px -6px color-mix(in srgb, var(--color-magenta) 60%, transparent);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Las cifras de una tabla tienen que alinearse en columna. */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-cyan) 35%, transparent);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* Panel base: la superficie sobre la que se apoya todo. */
+  .panel {
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+
+  /* Panel de cristal, para cabeceras y tarjetas destacadas. */
+  .panel-glass {
+    background: color-mix(in srgb, var(--color-panel) 72%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+
+  /* Rejilla futurista. Solo como fondo de sección, nunca detrás de datos. */
+  .grid-backdrop {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-line) 55%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-line) 55%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+
+  .scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      color-mix(in srgb, #000 22%, transparent) 3px 4px
+    );
+    opacity: 0.35;
+  }
+
+  /* Borde luminoso para lo que está ocurriendo ahora. */
+  .edge-live {
+    border-color: color-mix(in srgb, var(--color-magenta) 55%, transparent);
+    box-shadow: var(--shadow-glow-magenta);
+  }
+
+  .edge-cyan {
+    border-color: color-mix(in srgb, var(--color-cyan) 45%, transparent);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  .text-gradient {
+    background: linear-gradient(
+      100deg,
+      var(--color-cyan),
+      var(--color-purple) 55%,
+      var(--color-magenta)
+    );
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Franja superior de sección, con un degradado técnico. */
+  .rule-gradient {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--color-cyan),
+      var(--color-magenta),
+      transparent
+    );
+  }
+}
+
+@layer utilities {
+  /* Punto pulsante de "en directo". Se detiene con reduced-motion. */
+  .pulse-live {
+    animation: pulse-live 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse-live {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.45;
+      transform: scale(0.82);
+    }
+  }
+
+  /* Punto de partida de las animaciones de entrada de GSAP. */
+  .reveal-init {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Directo                                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  /*
+    El punto de "en directo". Late porque es lo único de la página que de
+    verdad está pasando ahora mismo; si latiera cualquier otra cosa, este
+    dejaría de significar nada.
+  */
+  .live-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--color-magenta);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-magenta) 70%, transparent);
+    animation: live-pulse 1.8s ease-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-magenta) 70%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 0.55rem transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  /* Barrido de luz sobre el aviso de directo. Puramente decorativo. */
+  .live-banner__sweep {
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      color-mix(in srgb, var(--color-magenta) 16%, transparent) 48%,
+      transparent 66%
+    );
+    background-size: 220% 100%;
+    animation: live-sweep 3.6s linear infinite;
+  }
+
+  @keyframes live-sweep {
+    from {
+      background-position: 160% 0;
+    }
+    to {
+      background-position: -60% 0;
+    }
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* Cyberpunk                                                               */
+  /* ---------------------------------------------------------------------- */
+
+  /*
+    Líneas de barrido sobre un contenedor. Muy sutiles a propósito: el efecto
+    tiene que leerse como textura, no como una pantalla estropeada, y va encima
+    de texto que hay que poder leer.
+  */
+  .scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 2px,
+      color-mix(in srgb, var(--color-void) 26%, transparent) 2px 3px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  /* Borde de neón que respira. Para la pieza principal de una pantalla. */
+  .neon-frame {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-cyan) 30%, transparent),
+      0 0 28px -10px color-mix(in srgb, var(--color-cyan) 60%, transparent);
+    animation: neon-breathe 5s ease-in-out infinite;
+  }
+
+  @keyframes neon-breathe {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--color-cyan) 26%, transparent),
+        0 0 24px -12px color-mix(in srgb, var(--color-cyan) 50%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--color-cyan) 42%, transparent),
+        0 0 36px -8px color-mix(in srgb, var(--color-magenta) 55%, transparent);
+    }
+  }
+
+  /*
+    Aberración cromática al pasar por encima. Se hace con sombras de texto y no
+    con filtros porque un filtro fuerza una capa nueva en cada elemento, y esto
+    se usa en listas largas.
+  */
+  .glitch-hover {
+    transition: text-shadow 180ms ease;
+  }
+
+  .glitch-hover:hover {
+    text-shadow:
+      -1px 0 color-mix(in srgb, var(--color-magenta) 85%, transparent),
+      1px 0 color-mix(in srgb, var(--color-cyan) 85%, transparent);
+  }
+
+  /* Rejilla de fondo con desvanecido. Decorativa, nunca lleva contenido. */
+  .cyber-grid {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--color-line) 45%, transparent) 1px, transparent 1px),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-line) 45%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 78%);
+  }
+}
+
+/**
+ * Accesibilidad: si el sistema pide menos movimiento, se desactiva todo lo
+ * decorativo y el contenido se muestra ya en su posición final.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal-init {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    Lo decorativo se apaga entero. El punto de directo deja de latir pero sigue
+    ahí: es informacion, no adorno, y quitarlo cambiaria lo que la pagina dice.
+  */
+  .live-banner__sweep,
+  .neon-frame {
+    animation: none !important;
+  }
+
+  .live-dot {
+    animation: none !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-magenta) 30%, transparent) !important;
+  }
+}
+
+/**
+ * Enlace para saltar al contenido.
+ *
+ * Oculto hasta que recibe el foco, y entonces visible de verdad: es el primer
+ * elemento enfocable de la página y el único que existe solo para quien navega
+ * con teclado.
+ *
+ * Va aquí y no en clases de utilidad porque `sr-only` y `focus:not-sr-only`
+ * se disputan las mismas propiedades: la combinación funciona, pero depende de
+ * cómo se ordenen las utilidades al generarse. Un enlace que se anuncia y nunca
+ * se ve es peor que no tenerlo, así que esta regla no depende de nada.
+ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-cyan);
+  background: var(--color-panel);
+  color: var(--color-ink);
+  font-size: 0.875rem;
+}

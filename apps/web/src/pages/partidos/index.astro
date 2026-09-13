@@ -1,0 +1,55 @@
+---
+/**
+ * Todos los partidos, con filtros por estado y por jornada.
+ */
+import type { Match, TournamentOverview } from '@liga/contracts';
+import { Swords } from 'lucide-react';
+
+import { MatchList } from '../../components/matches/MatchList.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { EmptyState } from '../../components/ui/primitives.tsx';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getMatches, getTournament } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import Public from '../../layouts/Public.astro';
+
+let matches: Match[] = [];
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [matches, overview] = await Promise.all([getMatches(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const meta = pageMeta({
+  title: 'Partidos',
+  description:
+    'Todos los partidos de la Liga Estabanquitos 2026-1: programados, en juego, finalizados, aplazados y en disputa.',
+  pathname: '/partidos',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Partidos"
+    description="Los 90 partidos de la temporada. Un aplazado no cuenta como jugado; uno en disputa no cuenta hasta resolverse."
+    level={1}
+  />
+
+  {
+    failure !== null ? (
+      <ApiFailure failure={failure} />
+    ) : matches.length === 0 ? (
+      <EmptyState
+        title="Todavía no hay partidos"
+        description="Los partidos aparecen cuando se genera el calendario oficial."
+        icon={Swords}
+      />
+    ) : (
+      <MatchList matches={matches} client:load />
+    )
+  }
+</Public>

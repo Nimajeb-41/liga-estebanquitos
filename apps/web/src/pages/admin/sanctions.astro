@@ -1,0 +1,50 @@
+---
+/**
+ * Sanciones (administracion).
+ */
+import type { AdminPlayersResponse, AdminSanction, Rules } from '@liga/contracts';
+
+import { SanctionsAdmin } from '../../components/admin/SanctionsAdmin.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { getAdminPlayers, getAdminSanctions, getRules } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession, sessionHeader } from '../../lib/api/session.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/sanctions');
+
+const cookie = sessionHeader(Astro.cookies);
+
+let sanctions: AdminSanction[] = [];
+let players: AdminPlayersResponse | null = null;
+let rules: Rules | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [sanctions, players, rules] = await Promise.all([
+    getAdminSanctions({ cookie }),
+    getAdminPlayers({ cookie }),
+    getRules(),
+  ]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const sanctionable =
+  players === null ? [] : players.players.filter((player) => player.status !== 'REPLACED');
+---
+
+<Admin
+  title="Sanciones"
+  description="Registrar y anular. Nada se borra: una sanción anulada sigue en el historial."
+  session={session}
+>
+  {
+    failure !== null ? (
+      <ApiFailure failure={failure} />
+    ) : (
+      <SanctionsAdmin sanctions={sanctions} players={sanctionable} rules={rules} client:load />
+    )
+  }
+</Admin>

@@ -1,0 +1,239 @@
+---
+/**
+ * Overlay de un partido, para OBS.
+ *
+ * No es una página del sitio: es una fuente de navegador. Por eso no lleva
+ * cabecera, ni navegación, ni pie, ni fondo; y por eso va marcada `noindex`
+ * —no tiene ningún sentido en un buscador— aunque no es secreta: quien tenga
+ * el enlace la ve, igual que ve la ficha pública del partido, porque enseña
+ * exactamente lo mismo.
+ *
+ * Se ajusta por parámetros de la URL para no obligar al operador a tocar nada
+ * dentro de OBS:
+ *
+ *   ?variant=compact   una esquina en vez del tercio inferior
+ *   ?scale=1.4         multiplicador de tamaño
+ *   ?minimal=1         solo nombres y marcador
+ */
+import type { Match } from '@liga/contracts';
+
+import { Overlay, type OverlayOptions } from '../../../components/stream/Overlay.tsx';
+import { ApiError } from '../../../lib/api/client.ts';
+import { getMatch } from '../../../lib/api/endpoints.ts';
+import { pageMeta } from '../../../lib/seo.ts';
+import Base from '../../../layouts/Base.astro';
+
+export const prerender = false;
+
+const id = Astro.params.id ?? '';
+
+let match: Match | null = null;
+try {
+  match = await getMatch(id);
+} catch (error) {
+  // Un overlay roto en mitad de un directo no debe enseñar una pantalla de
+  // error encima del vídeo: se queda transparente y no tapa nada.
+  if (error instanceof ApiError && (error.status === 404 || error.status === 400)) {
+    return new Response(null, { status: 404 });
+  }
+}
+
+const query = Astro.url.searchParams;
+
+const rawScale = Number(query.get('scale'));
+const options: OverlayOptions = {
+  variant: query.get('variant') === 'compact' ? 'compact' : 'full',
+  // Se acota a un rango sensato: un `?scale=900` en la URL no puede reventar la escena.
+  scale: Number.isFinite(rawScale) && rawScale > 0 ? Math.min(4, Math.max(0.5, rawScale)) : 1,
+  minimal: query.get('minimal') === '1',
+};
+
+const meta = pageMeta({
+  title: match === null ? 'Overlay' : `${match.home.displayName} vs ${match.away.displayName}`,
+  description: 'Overlay de transmisión de la Liga Estabanquitos 2026-1.',
+  pathname: `/overlay/match/${id}`,
+  noindex: true,
+});
+---
+
+<Base meta={meta} bodyClass="overlay-body">
+  {match === null ? null : <Overlay match={match} options={options} client:load />}
+</Base>
+
+<style is:global>
+  /*
+    Fondo transparente de verdad: OBS compone esto sobre el vídeo del juego, y
+    cualquier color aquí taparía la partida. `!important` porque el `body` del
+    sitio trae su propio fondo oscuro.
+  */
+  body.overlay-body {
+    background: transparent !important;
+    margin: 0;
+    overflow: hidden;
+    /* Nadie puede hacer clic en una fuente de OBS; el cursor solo estorba. */
+    cursor: none;
+  }
+
+  body.overlay-body a[href='#contenido'] {
+    display: none;
+  }
+
+  .overlay-root {
+    /*
+      Sombra doble en lugar de un panel: el overlay tiene que leerse tanto
+      sobre una arena clara como sobre una noche. Un fondo semitransparente
+      tapa juego; una sombra, no.
+    */
+    --overlay-shadow:
+      0 2px 4px rgb(0 0 0 / 0.9), 0 0 18px rgb(0 0 0 / 0.75), 0 0 2px rgb(0 0 0 / 1);
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35em;
+    color: #fff;
+    font-family: 'Chakra Petch', system-ui, sans-serif;
+    text-shadow: var(--overlay-shadow);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .overlay-full {
+    bottom: 6vh;
+    width: min(92vw, 62em);
+  }
+
+  .overlay-compact {
+    top: 3vh;
+    left: 3vw;
+    transform: none;
+    align-items: flex-start;
+    font-size: 0.75em;
+  }
+
+  .overlay-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.2em;
+    margin: 0;
+    font-size: 0.85em;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  .overlay-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .overlay-state.is-live {
+    color: #ff2e88;
+  }
+
+  .overlay-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0.6em currentColor;
+    animation: overlay-pulse 1.6s ease-in-out infinite;
+  }
+
+  /*
+    La única cosa que se mueve, y solo porque «en directo» tiene que
+    distinguirse de un rótulo estático. Se detiene si el sistema pide menos
+    movimiento.
+  */
+  @keyframes overlay-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .overlay-dot {
+      animation: none;
+    }
+  }
+
+  .overlay-scoreline {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.8em;
+    width: 100%;
+  }
+
+  .overlay-compact .overlay-scoreline {
+    width: auto;
+    gap: 0.6em;
+  }
+
+  .overlay-name {
+    font-size: 2.6em;
+    font-weight: 700;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .overlay-name-home {
+    text-align: right;
+  }
+
+  .overlay-name-away {
+    text-align: left;
+  }
+
+  .overlay-score {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25em;
+    font-size: 3.4em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .overlay-crowns {
+    color: #4de3ff;
+  }
+
+  .overlay-sep {
+    opacity: 0.6;
+  }
+
+  .overlay-vs {
+    font-size: 0.62em;
+    letter-spacing: 0.14em;
+    opacity: 0.75;
+  }
+
+  /* Un partido que no cuenta no se anuncia con los colores de uno que sí. */
+  .overlay-root[data-status='POSTPONED'] .overlay-state,
+  .overlay-root[data-status='CANCELLED'] .overlay-state,
+  .overlay-root[data-status='DISPUTED'] .overlay-state {
+    color: #ffb340;
+  }
+</style>
+
+<style is:global>
+  /*
+    Incomparecencia. Va en el color de aviso, no en el del marcador: no es un
+    resultado de batalla y no debe leerse como tal desde el otro lado de la
+    pantalla.
+  */
+  .overlay-walkover {
+    font-size: 0.58em;
+    letter-spacing: 0.12em;
+    color: #ffb340;
+  }
+</style>

@@ -1,0 +1,81 @@
+---
+/**
+ * Pie del sitio.
+ *
+ * Incluye el descargo que exige la Fan Content Policy de Supercell. No es
+ * decorativo: es obligatorio.
+ */
+import { PUBLIC_NAV, SECONDARY_NAV } from '../../lib/nav.ts';
+import Brand from './Brand.astro';
+
+interface Props {
+  rulesVersion?: string | null;
+}
+
+const { rulesVersion = null } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-16 border-t border-line bg-panel/60">
+  <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr]">
+    <div>
+      <Brand href={null} />
+      <p class="mt-4 max-w-sm text-sm text-muted">
+        Liga de Clash Royale de diez participantes, todos contra todos, ida y vuelta. La
+        clasificación se deriva de los resultados: nunca se edita a mano.
+      </p>
+      {
+        rulesVersion === null ? null : (
+          <p class="mt-3 font-mono text-xs text-faint">Reglamento {rulesVersion}</p>
+        )
+      }
+    </div>
+
+    <nav aria-label="Competición">
+      <h2 class="mb-3 text-[11px] font-medium tracking-[0.12em] text-faint uppercase">
+        Competición
+      </h2>
+      <ul class="space-y-2">
+        {
+          PUBLIC_NAV.map((item) => (
+            <li>
+              <a href={item.href} class="text-sm text-muted transition-colors hover:text-cyan">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <nav aria-label="Información">
+      <h2 class="mb-3 text-[11px] font-medium tracking-[0.12em] text-faint uppercase">
+        Información
+      </h2>
+      <ul class="space-y-2">
+        {
+          SECONDARY_NAV.map((item) => (
+            <li>
+              <a href={item.href} class="text-sm text-muted transition-colors hover:text-cyan">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href="/admin" class="text-sm text-muted transition-colors hover:text-cyan">
+            Administración
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="border-t border-line px-4 py-6 sm:px-6">
+    <p class="mx-auto max-w-7xl text-xs leading-relaxed text-faint">
+      © {year} Liga Estabanquitos. Este material no está afiliado, respaldado, patrocinado ni aprobado
+      específicamente por Supercell, y Supercell no se responsabiliza por él. Para más información, consulta
+      la <span class="whitespace-nowrap">Fan Content Policy</span> de Supercell.
+    </p>
+  </div>
+</footer>

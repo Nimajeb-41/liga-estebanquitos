@@ -1,0 +1,91 @@
+---
+/**
+ * Modo transmisión.
+ *
+ * Genera la URL del overlay que el operador pega en OBS, con vista previa. No
+ * toca nada de la competición: es un generador de enlaces. Los enlaces de
+ * directo y repetición de cada partido se editan en su ficha administrativa,
+ * que es donde queda la auditoría.
+ */
+import type { Match } from '@liga/contracts';
+
+import { StreamControl } from '../../components/stream/StreamControl.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { getMatches } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession } from '../../lib/api/session.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/stream');
+
+let matches: Match[] = [];
+let failure: FriendlyError | null = null;
+
+try {
+  matches = await getMatches();
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+/**
+ * Se ofrecen primero los que se van a retransmitir: lo que está en juego,
+ * luego lo que viene, y al final lo ya jugado —que sigue sirviendo para
+ * preparar la escena antes de un directo—.
+ */
+const ORDER: Readonly<Record<string, number>> = {
+  LIVE: 0,
+  SCHEDULED: 1,
+  DISPUTED: 2,
+  COMPLETED: 3,
+  POSTPONED: 4,
+  CANCELLED: 5,
+};
+
+const ordered = [...matches].sort(
+  (left, right) =>
+    (ORDER[left.status] ?? 9) - (ORDER[right.status] ?? 9) ||
+    left.roundNumber - right.roundNumber ||
+    left.order - right.order,
+);
+
+/**
+ * El origen que ve el navegador, no el interno.
+ *
+ * La URL se pega en otra máquina —la del operador— así que tiene que ser la
+ * pública. `Astro.url` es la de la petición, que es exactamente esa.
+ */
+const origin = Astro.url.origin;
+---
+
+<Admin
+  title="Transmisión"
+  description="La URL del overlay para OBS, con vista previa. No cambia nada de la competición."
+  session={session}
+>
+  {
+    failure !== null ? (
+      <ApiFailure failure={failure} />
+    ) : (
+      <StreamControl matches={ordered} origin={origin} client:load />
+    )
+  }
+</Admin>
+
+<style>
+  /* Tablero de transparencia: lo que hay debajo del overlay dentro de OBS. */
+  :global(.checkerboard) {
+    background-color: #1a1d26;
+    background-image:
+      linear-gradient(45deg, #12141b 25%, transparent 25%),
+      linear-gradient(-45deg, #12141b 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #12141b 75%),
+      linear-gradient(-45deg, transparent 75%, #12141b 75%);
+    background-size: 24px 24px;
+    background-position:
+      0 0,
+      0 12px,
+      12px -12px,
+      -12px 0;
+  }
+</style>

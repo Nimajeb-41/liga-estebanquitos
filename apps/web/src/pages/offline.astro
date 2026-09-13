@@ -1,0 +1,46 @@
+---
+/**
+ * Sin conexión.
+ *
+ * La sirve el service worker cuando se pide una página que no está en caché y
+ * no hay red. Dice exactamente eso y no finge saber nada más.
+ *
+ * En concreto **no** enseña una clasificación guardada. Una tabla de hace dos
+ * horas presentada como la de ahora es peor que no enseñar nada: quien la lea no
+ * tiene forma de saber que está mirando el pasado.
+ */
+import { WifiOff } from 'lucide-react';
+
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+const meta = pageMeta({
+  title: 'Sin conexión',
+  description: 'No hay conexión para cargar los datos de la liga.',
+  pathname: '/offline',
+  noindex: true,
+});
+---
+
+<Public meta={meta}>
+  <div class="mx-auto flex max-w-md flex-col items-center py-16 text-center">
+    <WifiOff aria-hidden="true" className="size-10 text-faint" />
+    <h1 class="mt-4 font-display text-2xl font-bold">Sin conexión</h1>
+    <p class="mt-3 text-sm text-muted">
+      No se pueden cargar los datos de la liga ahora mismo. La clasificación y los partidos se
+      calculan en el servidor, así que hace falta conexión para verlos al día.
+    </p>
+    <p class="mt-3 text-xs text-faint">
+      No mostramos una copia guardada a propósito: una tabla de hace dos horas presentada como la de
+      ahora es peor que no mostrar nada.
+    </p>
+    <button
+      type="button"
+      data-sfx="click"
+      onclick="window.location.reload()"
+      class="mt-6 inline-flex min-h-11 items-center rounded-lg border border-cyan/50 bg-cyan/10 px-5 text-sm font-medium text-cyan transition-colors hover:bg-cyan/20"
+    >
+      Reintentar
+    </button>
+  </div>
+</Public>

@@ -1,0 +1,129 @@
+---
+/**
+ * Récords de la temporada.
+ *
+ * Los extremos de la liga: la mayor goleada, el partido con más coronas, la
+ * racha más larga y quién gana más veces por 3-0.
+ *
+ * Dos decisiones que no son adorno:
+ *
+ * - Una incomparecencia no puede ser «la mayor goleada». Su resultado no es un
+ *   marcador, es la ausencia de uno; contarla inventaría una batalla.
+ * - Un récord sin datos se dice con una raya, no con un cero. Cero sería «se
+ *   midió y salió cero», que es otra cosa.
+ */
+import type { SeasonRecords } from '@liga/contracts';
+import { Crown, Flame, Swords, Trophy } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+import { EmptyState } from '../ui/primitives.tsx';
+
+interface Props {
+  records: SeasonRecords;
+}
+
+const { records } = Astro.props;
+
+/** Qué mide cada récord y en qué unidad. El código viene del dominio. */
+const RECORD: Readonly<
+  Record<string, { label: string; unit: string; hint: string; icon: LucideIcon }>
+> = {
+  BIGGEST_WIN: {
+    label: 'Mayor diferencia',
+    unit: 'coronas',
+    hint: 'La victoria más holgada de la temporada.',
+    icon: Trophy,
+  },
+  MOST_CROWNS_IN_MATCH: {
+    label: 'Partido con más coronas',
+    unit: 'coronas',
+    hint: 'Sumando las de los dos participantes.',
+    icon: Crown,
+  },
+  LONGEST_WIN_STREAK: {
+    label: 'Racha más larga',
+    unit: 'victorias',
+    hint: 'Victorias seguidas, en cualquier momento de la temporada.',
+    icon: Flame,
+  },
+  MOST_MAX_CROWN_WINS: {
+    label: 'Más victorias por 3 coronas',
+    unit: 'partidos',
+    hint: 'Las que puntúan distinto en el reglamento.',
+    icon: Swords,
+  },
+};
+
+const known = records.records.filter((record) => RECORD[record.code] !== undefined);
+const withValue = known.filter((record) => record.value !== null);
+---
+
+<section class="panel p-5" aria-labelledby="records">
+  <div class="flex flex-wrap items-baseline justify-between gap-3">
+    <h2 id="records" class="font-display text-base font-semibold">Récords de la temporada</h2>
+    <p class="font-mono text-[11px] text-faint">reglamento {records.rulesVersion}</p>
+  </div>
+
+  {
+    withValue.length === 0 ? (
+      <div class="mt-4">
+        <EmptyState
+          title="Todavía no hay récords"
+          description="Aparecen en cuanto se juegue el primer partido."
+        />
+      </div>
+    ) : (
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {known.map((record) => {
+          const meta = RECORD[record.code]!;
+          const Icon = meta.icon;
+          return (
+            <li class="rounded-panel border border-line bg-elevated px-4 py-3">
+              <p class="flex items-center gap-2 text-[11px] tracking-[0.12em] text-faint uppercase">
+                <Icon aria-hidden="true" className="size-3.5" />
+                {meta.label}
+              </p>
+              <p class="mt-1 font-display text-2xl font-semibold">
+                {record.value === null ? (
+                  <span class="text-faint">—</span>
+                ) : (
+                  <>
+                    {record.value}
+                    <span class="ml-1.5 text-sm font-normal text-muted">{meta.unit}</span>
+                  </>
+                )}
+              </p>
+              <p class="mt-1 text-sm">
+                {record.players.length === 0 ? (
+                  <span class="text-faint">Sin datos todavía</span>
+                ) : (
+                  record.players.map((player, index) => (
+                    <>
+                      {index > 0 ? <span class="text-faint"> · </span> : null}
+                      <a
+                        href={`/jugadores/${player.slug}`}
+                        class="underline-offset-2 hover:text-cyan hover:underline"
+                      >
+                        {player.displayName}
+                      </a>
+                    </>
+                  ))
+                )}
+              </p>
+              <p class="mt-1 text-xs text-muted">
+                {meta.hint}
+                {record.roundNumber === null ? '' : ` Jornada ${record.roundNumber}.`}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+
+  <p class="mt-4 border-t border-line pt-3 text-xs text-muted">
+    Las incomparecencias quedan fuera de los récords de marcador: no hubo batalla, y un resultado
+    inventado contaminaría la diferencia de coronas de los dos. Un récord sin datos se muestra con
+    una raya, no con un cero.
+  </p>
+</section>

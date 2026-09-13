@@ -1,0 +1,189 @@
+---
+/**
+ * Transmisión.
+ *
+ * Dónde se ve la liga y quién la narra. Es la página a la que lleva el aviso de
+ * directo, y la que se comparte cuando alguien pregunta «¿por dónde lo ponen?».
+ *
+ * El estado «en directo» sale de **nuestra API**: que se esté jugando un partido
+ * de esta liga lo sabemos nosotros. Si el canal está emitiendo otra cosa, eso lo
+ * sabe Kick y no se afirma aquí.
+ */
+import type { BroadcastStatus, Match, TournamentOverview } from '@liga/contracts';
+import { CalendarClock, ExternalLink, Radio } from 'lucide-react';
+
+import LiveBanner from '../components/stream/LiveBanner.astro';
+import StreamerSection from '../components/stream/StreamerSection.astro';
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { EmptyState, Panel } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getBroadcast, getMatches, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { formatDateTime, roundLabel } from '../lib/presentation.ts';
+import { pageMeta } from '../lib/seo.ts';
+import { STREAMER } from '../lib/streamer.ts';
+import Public from '../layouts/Public.astro';
+
+let matches: Match[] = [];
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [matches, overview] = await Promise.all([getMatches(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+/*
+  El directo lo decide el backend cruzando Kick con nuestros partidos. Aquí no
+  se deduce nada: si falla, no hay directo que anunciar.
+*/
+let broadcast: BroadcastStatus | null = null;
+try {
+  broadcast = await getBroadcast();
+} catch {
+  broadcast = null;
+}
+const live = broadcast?.live === true;
+
+/*
+  Lo que viene: partidos con fecha, aún sin jugar, más próximo primero. Los que
+  no tienen fecha no aparecen —no se puede decir cuándo se ven— y los ya
+  jugados tampoco: esta página es sobre lo que se puede seguir.
+*/
+const upcoming = matches
+  .filter((match) => match.status === 'SCHEDULED' && match.scheduledAt !== null)
+  .sort((a, b) => (a.scheduledAt ?? '').localeCompare(b.scheduledAt ?? ''))
+  .slice(0, 6);
+
+const meta = pageMeta({
+  title: 'Transmisión',
+  description: `La Liga Estabanquitos 2026-1 se narra en directo por ${STREAMER.name}. Aquí están el canal, las redes y los próximos partidos.`,
+  pathname: '/transmision',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Transmisión"
+    description="Dónde se ve la liga, y quién la cuenta."
+    level={1}
+  />
+
+  {
+    failure !== null ? (
+      <ApiFailure failure={failure} />
+    ) : (
+      <div class="space-y-6">
+        <LiveBanner broadcast={broadcast} />
+
+        {/* La pieza principal: el canal, siempre visible aunque no haya directo. */}
+        <section
+          class="panel neon-frame relative overflow-hidden p-6 text-center sm:p-10"
+          aria-labelledby="canal"
+          data-reveal
+        >
+          <div
+            aria-hidden="true"
+            class="cyber-grid pointer-events-none absolute inset-0 opacity-40"
+          />
+
+          <div class="relative">
+            <p class="flex items-center justify-center gap-2 text-[11px] tracking-[0.18em] text-cyan uppercase">
+              <Radio aria-hidden="true" className="size-3.5" />
+              Canal oficial
+            </p>
+
+            <h2 id="canal" class="mt-3 font-display text-3xl font-bold sm:text-4xl">
+              {live ? 'Se está jugando ahora' : 'Toda la liga, en directo'}
+            </h2>
+
+            <p class="mx-auto mt-3 max-w-xl text-sm text-muted">
+              {live
+                ? 'Hay un partido en juego. El directo está abierto.'
+                : `Cada jornada se narra en ${STREAMER.liveLabel}. Cuando empiece un partido, aquí aparecerá el enlace al directo.`}
+            </p>
+
+            <a
+              href={STREAMER.liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-sfx="live"
+              class:list={[
+                'mt-6 inline-flex min-h-12 items-center gap-2.5 rounded-xl px-7 text-base font-bold transition-transform duration-200 hover:scale-[1.04]',
+                live
+                  ? 'bg-magenta text-void'
+                  : 'border border-cyan/50 bg-cyan/10 text-cyan hover:bg-cyan/20',
+              ]}
+            >
+              {live ? <span class="live-dot" aria-hidden="true" /> : null}
+              Ver en {STREAMER.liveLabel}
+              <ExternalLink aria-hidden="true" className="size-4 opacity-70" />
+            </a>
+
+            <p class="mt-3 font-mono text-[11px] text-faint">kick.com/esstebannpluss</p>
+          </div>
+        </section>
+
+        <div data-reveal>
+          <StreamerSection />
+        </div>
+
+        <section class="panel p-5 sm:p-6" aria-labelledby="proximos" data-reveal>
+          <h2 id="proximos" class="flex items-center gap-2 font-display text-base font-semibold">
+            <CalendarClock aria-hidden="true" className="size-4 text-cyan" />
+            Próximos partidos
+          </h2>
+
+          {upcoming.length === 0 ? (
+            <div class="mt-4">
+              <EmptyState
+                title="Todavía sin fechas"
+                description="Los horarios se acuerdan sobre la marcha y aparecen aquí en cuanto se fijan."
+              />
+            </div>
+          ) : (
+            <ul class="mt-4 space-y-2">
+              {upcoming.map((match) => (
+                <li>
+                  <a
+                    href={`/partidos/${match.id}`}
+                    data-sfx="hover"
+                    class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line px-3 py-2.5 transition-colors hover:border-cyan/40"
+                  >
+                    <span class="min-w-0 text-sm">
+                      <span class="glitch-hover block truncate font-medium">
+                        {match.home.displayName} <span class="text-faint">vs</span>{' '}
+                        {match.away.displayName}
+                      </span>
+                      <span class="font-mono text-[11px] text-faint">
+                        {roundLabel(match.roundNumber)}
+                      </span>
+                    </span>
+                    <span class="shrink-0 text-sm text-muted">
+                      {formatDateTime(match.scheduledAt)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <Panel as="aside" data-reveal>
+          <h2 class="font-display text-base font-semibold">Cómo sabemos que hay directo</h2>
+          <p class="mt-2 text-sm text-muted">
+            El aviso de «en directo» aparece cuando administración marca un partido como
+            <strong class="text-ink"> en juego</strong>. Es un hecho de esta competición, no una
+            consulta a la plataforma: lo que afirmamos es que se está jugando un partido de la liga.
+          </p>
+          <p class="mt-2 text-sm text-muted">
+            Si el canal está emitiendo otra cosa —o no está emitiendo—, eso lo sabe{' '}
+            {STREAMER.liveLabel} y no lo decimos aquí. Preferimos no afirmar lo que no podemos
+            comprobar.
+          </p>
+        </Panel>
+      </div>
+    )
+  }
+</Public>

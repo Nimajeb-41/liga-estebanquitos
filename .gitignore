@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.env.backup-*
+*.log
+.DS_Store
+Thumbs.db
+
+# Evidencia cruda del spike: lleva tags y nombres de terceros.
+evidence/
+
+# Base de datos local: son los datos de la liga, no codigo.
+/datos/

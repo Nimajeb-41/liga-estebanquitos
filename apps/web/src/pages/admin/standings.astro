@@ -1,0 +1,48 @@
+---
+/**
+ * Clasificacion (administracion).
+ *
+ * Exactamente la misma tabla que ve el publico, con los mismos datos: la
+ * clasificacion no se edita desde ningun sitio, tampoco desde aqui.
+ */
+import type { Standings } from '@liga/contracts';
+
+import { StandingsTable } from '../../components/standings/StandingsTable.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { getStandings } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession } from '../../lib/api/session.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/standings');
+
+let standings: Standings | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  standings = await getStandings();
+} catch (error) {
+  failure = friendlyError(error);
+}
+---
+
+<Admin
+  title="Clasificación"
+  description="Derivada de los resultados y las sanciones. No existe ninguna pantalla para editarla, y no va a existir."
+  session={session}
+>
+  {
+    failure !== null || standings === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-4">
+        <p class="rounded-panel border border-cyan/30 bg-cyan/5 px-4 py-3 text-sm text-muted">
+          Para cambiar la tabla hay que cambiar lo que la produce: un resultado, una corrección o
+          una sanción. Todo eso deja rastro en la auditoría.
+        </p>
+        <StandingsTable standings={standings} client:load />
+      </div>
+    )
+  }
+</Admin>

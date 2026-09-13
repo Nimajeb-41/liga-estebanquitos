@@ -1,0 +1,96 @@
+---
+/**
+ * Calendario (administración).
+ *
+ * Generación del fixture y vista de las jornadas con el estado de cada partido.
+ */
+import type { Fixture, TournamentOverview } from '@liga/contracts';
+
+import { FixtureAdmin } from '../../components/admin/FixtureAdmin.tsx';
+import { RoundStatusBadge } from '../../components/matches/RoundSummary.tsx';
+import { MatchStatusBadge } from '../../components/matches/MatchStatus.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { EmptyState } from '../../components/ui/primitives.tsx';
+import { getFixture, getTournament } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession } from '../../lib/api/session.ts';
+import { formatDateTime, legLabel, roundLabel } from '../../lib/presentation.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/fixtures');
+
+let fixture: Fixture | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [fixture, overview] = await Promise.all([getFixture(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+---
+
+<Admin
+  title="Calendario"
+  description="Las 18 jornadas y sus partidos. Un aplazamiento no cambia la jornada de un partido."
+  session={session}
+>
+  {
+    failure !== null || overview === null || fixture === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-6">
+        <FixtureAdmin overview={overview} client:load />
+
+        {fixture.rounds.length === 0 ? (
+          <EmptyState
+            title="Sin jornadas"
+            description="Genera el calendario para que aparezcan aquí."
+          />
+        ) : (
+          <div class="space-y-3">
+            {fixture.rounds.map((round) => (
+              <details class="panel overflow-hidden p-0">
+                <summary class="flex cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-3 transition-colors hover:bg-elevated/60">
+                  <span class="font-display font-bold">{roundLabel(round.number)}</span>
+                  <span class="font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+                    {legLabel(round.leg)}
+                  </span>
+                  <RoundStatusBadge matches={round.matches} />
+                  <span class="ml-auto font-mono text-xs text-faint">
+                    {round.matches.length} partidos
+                  </span>
+                </summary>
+                <ul class="divide-y divide-line border-t border-line">
+                  {round.matches.map((match) => (
+                    <li>
+                      <a
+                        href={`/admin/matches/${match.id}`}
+                        class="flex flex-wrap items-center gap-3 px-4 py-3 transition-colors hover:bg-elevated/60"
+                      >
+                        <span class="min-w-0 flex-1 truncate text-sm">
+                          {match.home.displayName} <span class="text-faint">vs</span>{' '}
+                          {match.away.displayName}
+                        </span>
+                        {match.result === null ? null : (
+                          <span class="font-mono text-sm">
+                            {match.result.homeCrowns}–{match.result.awayCrowns}
+                          </span>
+                        )}
+                        <span class="font-mono text-[11px] text-faint">
+                          {formatDateTime(match.scheduledAt)}
+                        </span>
+                        <MatchStatusBadge status={match.status} />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+</Admin>

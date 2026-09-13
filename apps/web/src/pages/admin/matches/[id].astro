@@ -1,0 +1,192 @@
+---
+/**
+ * Ficha administrativa de un partido.
+ *
+ * A la izquierda, lo que se puede hacer; a la derecha, todo lo que se sabe:
+ * reportes, aplazamientos y correcciones, con el texto completo que no se
+ * publica.
+ */
+import type { AdminMatchDetail } from '@liga/contracts';
+
+import { MatchAdmin } from '../../../components/admin/MatchAdmin.tsx';
+import { MatchStatusBadge } from '../../../components/matches/MatchStatus.tsx';
+import ApiFailure from '../../../components/ui/ApiFailure.astro';
+import { EmptyState, KeyValue } from '../../../components/ui/primitives.tsx';
+import { ApiError } from '../../../lib/api/client.ts';
+import { getAdminMatch } from '../../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../../lib/api/messages.ts';
+import { currentSession, sessionHeader } from '../../../lib/api/session.ts';
+import {
+  formatDateTime,
+  legLabel,
+  POSTPONEMENT_REASON_LABELS,
+  roundLabel,
+  signed,
+  VICTORY_TYPE_LABELS,
+} from '../../../lib/presentation.ts';
+import Admin from '../../../layouts/Admin.astro';
+
+const id = Astro.params.id ?? '';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect(`/admin/login?next=/admin/matches/${id}`);
+
+let match: AdminMatchDetail | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  match = await getAdminMatch(id, { cookie: sessionHeader(Astro.cookies) });
+} catch (error) {
+  if (error instanceof ApiError && (error.status === 404 || error.status === 400)) {
+    return new Response(null, { status: 404 });
+  }
+  failure = friendlyError(error);
+}
+
+const title = match === null ? 'Partido' : `${match.home.displayName} vs ${match.away.displayName}`;
+
+const nameOf = (playerId: string): string =>
+  match === null
+    ? playerId
+    : playerId === match.home.id
+      ? match.home.displayName
+      : playerId === match.away.id
+        ? match.away.displayName
+        : playerId;
+---
+
+<Admin
+  title={title}
+  description={match === null
+    ? undefined
+    : `${roundLabel(match.roundNumber)} · ${legLabel(match.leg)}`}
+  session={session}
+>
+  {
+    failure !== null || match === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-6">
+        <nav aria-label="Ruta" class="flex flex-wrap items-center gap-3 text-xs text-muted">
+          <a href="/admin/matches" class="underline-offset-2 hover:underline">
+            Partidos
+          </a>
+          <MatchStatusBadge status={match.status} />
+          <a href={`/partidos/${match.id}`} class="underline-offset-2 hover:underline">
+            Ver la ficha pública
+          </a>
+        </nav>
+
+        <section class="panel p-5">
+          <dl class="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <KeyValue label="Marcador" mono>
+              {match.result === null || match.status === 'POSTPONED'
+                ? 'Sin resultado'
+                : `${match.result.homeCrowns} – ${match.result.awayCrowns}`}
+            </KeyValue>
+            <KeyValue label="Tipo de victoria">
+              {match.result === null ? '—' : VICTORY_TYPE_LABELS[match.result.victoryType]}
+            </KeyValue>
+            <KeyValue label="Puntos" mono>
+              {match.result === null
+                ? '—'
+                : match.result.points === null
+                  ? 'Pendiente (P-01)'
+                  : `${signed(match.result.points.home)} / ${signed(match.result.points.away)}`}
+            </KeyValue>
+            <KeyValue label="Fecha prevista">{formatDateTime(match.scheduledAt)}</KeyValue>
+            <KeyValue label="Fecha original">{formatDateTime(match.originalScheduledAt)}</KeyValue>
+          </dl>
+        </section>
+
+        <div class="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
+          <div>
+            <MatchAdmin match={match} client:load />
+          </div>
+
+          <div class="space-y-5">
+            <section class="panel p-5">
+              <h2 class="font-display text-base font-semibold">Reportes de los jugadores</h2>
+              <p class="mt-1 mb-4 text-sm text-muted">
+                Información administrativa: no aparece en la ficha pública.
+              </p>
+              {match.history.reports.length === 0 ? (
+                <EmptyState title="Sin reportes" />
+              ) : (
+                <ul class="space-y-2">
+                  {match.history.reports.map((report) => (
+                    <li class="rounded-md border border-line px-3 py-2 text-sm">
+                      <p class="flex items-center justify-between gap-3">
+                        <span class="font-medium">{nameOf(report.playerId)}</span>
+                        <span class="font-mono">
+                          {report.homeCrowns}–{report.awayCrowns}
+                        </span>
+                      </p>
+                      <p class="mt-1 font-mono text-[11px] text-faint">
+                        {formatDateTime(report.reportedAt)}
+                      </p>
+                      {report.evidenceUrl === null ? null : (
+                        <p class="mt-1 truncate text-xs">
+                          <a
+                            href={report.evidenceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer external"
+                            class="text-cyan underline-offset-2 hover:underline"
+                          >
+                            Evidencia adjunta
+                          </a>
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section class="panel p-5">
+              <h2 class="font-display text-base font-semibold">Aplazamientos</h2>
+              {match.history.postponements.length === 0 ? (
+                <p class="mt-3 text-sm text-muted">Este partido nunca se ha aplazado.</p>
+              ) : (
+                <ol class="mt-4 space-y-3">
+                  {match.history.postponements.map((entry) => (
+                    <li class="rounded-md border border-line px-3 py-2 text-sm">
+                      <p class="font-medium">
+                        {entry.event === 'POSTPONED' ? 'Aplazado' : 'Reprogramado'} ·{' '}
+                        {POSTPONEMENT_REASON_LABELS[entry.reason]}
+                      </p>
+                      <p class="mt-1 text-muted">{entry.notes}</p>
+                      <p class="mt-1 font-mono text-[11px] text-faint">
+                        {formatDateTime(entry.previousScheduledAt)} →{' '}
+                        {formatDateTime(entry.newScheduledAt)} · {formatDateTime(entry.occurredAt)}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+
+            <section class="panel p-5">
+              <h2 class="font-display text-base font-semibold">Correcciones</h2>
+              {match.history.revisions.length === 0 ? (
+                <p class="mt-3 text-sm text-muted">El resultado nunca se ha corregido.</p>
+              ) : (
+                <ol class="mt-4 space-y-3">
+                  {match.history.revisions.map((revision) => (
+                    <li class="rounded-md border border-purple/40 bg-purple/5 px-3 py-2 text-sm">
+                      <p class="font-medium text-purple">Revisión {revision.revision}</p>
+                      <p class="mt-1 text-muted">{revision.reason}</p>
+                      <p class="mt-1 font-mono text-[11px] text-faint">
+                        {formatDateTime(revision.changedAt)}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
+        </div>
+      </div>
+    )
+  }
+</Admin>

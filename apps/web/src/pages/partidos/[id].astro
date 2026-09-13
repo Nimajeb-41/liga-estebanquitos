@@ -1,0 +1,338 @@
+---
+/**
+ * Match Center.
+ *
+ * Todo lo que se sabe de un partido en una pantalla: quién juega, en qué
+ * jornada, en qué estado, qué pasó con él y qué repartió.
+ *
+ * Las tres reglas que manda esta página:
+ *
+ * 1. Un partido aplazado conserva su jornada y su fecha original, y no se
+ *    presenta como derrota ni como jugado.
+ * 2. Un resultado en disputa no es definitivo y no cuenta en la tabla.
+ * 3. Si el reglamento no define los puntos de un resultado, se dice; no se
+ *    inventa un número.
+ */
+import type {
+  BroadcastStatus,
+  MatchDetail,
+  MatchEvidence,
+  TournamentOverview,
+} from '@liga/contracts';
+import { CalendarClock, ExternalLink, Trophy } from 'lucide-react';
+
+import { LiveMatch } from '../../components/matches/LiveMatch.tsx';
+import { MatchScore } from '../../components/matches/MatchScore.tsx';
+import {
+  MatchStateNotice,
+  PostponementDetail,
+} from '../../components/matches/MatchStateNotice.tsx';
+import { MatchStatusBadge } from '../../components/matches/MatchStatus.tsx';
+import { MatchEvidencePanel } from '../../components/clash/MatchEvidence.tsx';
+import { MatchTimeline } from '../../components/matches/MatchTimeline.tsx';
+import { StreamPanel } from '../../components/matches/StreamPanel.tsx';
+import { PlayerAvatar } from '../../components/players/PlayerAvatar.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { KeyValue, Panel, PendingRule } from '../../components/ui/primitives.tsx';
+import { ApiError } from '../../lib/api/client.ts';
+import {
+  getBroadcast,
+  getMatch,
+  getMatchEvidence,
+  getTournament,
+} from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import {
+  countsForStandings,
+  formatDateTime,
+  legLabel,
+  roundLabel,
+  signed,
+  VICTORY_TYPE_LABELS,
+} from '../../lib/presentation.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import { STREAMER } from '../../lib/streamer.ts';
+import Public from '../../layouts/Public.astro';
+
+const id = Astro.params.id ?? '';
+
+let match: MatchDetail | null = null;
+let overview: TournamentOverview | null = null;
+let evidence: MatchEvidence | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [match, overview] = await Promise.all([getMatch(id), getTournament()]);
+  // La evidencia es un extra: si no se puede traer, la ficha se ve igual.
+  evidence = await getMatchEvidence(id).catch(() => null);
+} catch (error) {
+  if (error instanceof ApiError && (error.status === 404 || error.status === 400)) {
+    return new Response(null, { status: 404 });
+  }
+  failure = friendlyError(error);
+}
+
+const title = match === null ? 'Partido' : `${match.home.displayName} vs ${match.away.displayName}`;
+
+const meta = pageMeta({
+  title,
+  description:
+    match === null
+      ? 'Ficha de un partido de la Liga Estabanquitos 2026-1.'
+      : `${title} · jornada ${match.roundNumber} de la Liga Estabanquitos 2026-1.`,
+  pathname: `/partidos/${id}`,
+});
+
+const result = match?.result ?? null;
+const winnerName =
+  result === null || match === null
+    ? null
+    : result.winnerId === match.home.id
+      ? match.home.displayName
+      : result.winnerId === match.away.id
+        ? match.away.displayName
+        : null;
+/*
+  ¿Se puede ver este partido ahora? Solo si el canal está emitiendo Clash
+  Royale y este partido está entre los que se están jugando. Con su propio
+  `catch`: la ficha no depende de que Kick responda.
+*/
+let broadcast: BroadcastStatus | null = null;
+try {
+  broadcast = await getBroadcast();
+} catch {
+  broadcast = null;
+}
+const watchUrl =
+  match !== null &&
+  broadcast?.live === true &&
+  broadcast.matches.some((entry) => entry.id === match.id)
+    ? (match.stream.url ?? broadcast.channel.url)
+    : null;
+
+const showResult =
+  match !== null && result !== null && match.status !== 'POSTPONED' && match.status !== 'CANCELLED';
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  {
+    failure !== null || match === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-8">
+        <nav aria-label="Ruta" class="flex flex-wrap items-center gap-2 text-xs text-muted">
+          <a href="/partidos" class="underline-offset-2 hover:underline">
+            Partidos
+          </a>
+          <span aria-hidden="true">/</span>
+          <a href={`/jornadas/${match.roundNumber}`} class="underline-offset-2 hover:underline">
+            {roundLabel(match.roundNumber)}
+          </a>
+        </nav>
+
+        {/* Cabecera: quién, cuándo y en qué estado. */}
+        <header class="panel-glass relative overflow-hidden p-6">
+          <div class="grid-backdrop pointer-events-none absolute inset-0 opacity-30" />
+          <div class="relative">
+            <p class="flex flex-wrap items-center gap-3">
+              <span class="font-mono text-xs tracking-[0.16em] text-faint uppercase">
+                {roundLabel(match.roundNumber)} · {legLabel(match.leg)} · Partido{' '}
+                {String(match.order).padStart(2, '0')}
+              </span>
+              <MatchStatusBadge status={match.status} />
+            </p>
+
+            {/*
+              El titular de la página. Va oculto a la vista porque el marcador
+              de abajo ya lo dice visualmente —con los nombres como enlaces,
+              que es lo útil ahí—, pero sin él quien navega por encabezados no
+              tiene por dónde entrar a esta pantalla.
+            */}
+            <h1 class="sr-only">
+              {match.home.displayName} contra {match.away.displayName} ·{' '}
+              {roundLabel(match.roundNumber)}
+            </h1>
+
+            <div class="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+              <a
+                href={`/jugadores/${match.home.slug}`}
+                class="flex flex-col items-center gap-2 text-center transition-colors hover:text-cyan sm:flex-row sm:text-left"
+              >
+                <PlayerAvatar name={match.home.displayName} size="lg" />
+                <span>
+                  <span class="block font-display text-lg font-bold sm:text-2xl">
+                    {match.home.displayName}
+                  </span>
+                  <span class="font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+                    Local
+                  </span>
+                </span>
+              </a>
+
+              <span class="text-center">
+                {showResult && result !== null ? (
+                  <MatchScore
+                    result={result}
+                    homeName={match.home.displayName}
+                    awayName={match.away.displayName}
+                    size="lg"
+                  />
+                ) : (
+                  <span class="font-display text-4xl font-bold text-faint">VS</span>
+                )}
+              </span>
+
+              <a
+                href={`/jugadores/${match.away.slug}`}
+                class="flex flex-col items-center gap-2 text-center transition-colors hover:text-cyan sm:flex-row-reverse sm:text-right"
+              >
+                <PlayerAvatar name={match.away.displayName} size="lg" />
+                <span>
+                  <span class="block font-display text-lg font-bold sm:text-2xl">
+                    {match.away.displayName}
+                  </span>
+                  <span class="font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+                    Visitante
+                  </span>
+                </span>
+              </a>
+            </div>
+
+            {winnerName === null ? null : (
+              <p class="mt-6 flex items-center justify-center gap-2 text-sm text-acid">
+                <Trophy aria-hidden="true" className="size-4" />
+                Gana {winnerName} · {VICTORY_TYPE_LABELS[result?.victoryType ?? 'NONE']}
+              </p>
+            )}
+          </div>
+        </header>
+
+        {/*
+          Qué implica el estado, en palabras. Los seis lo tienen: el silencio
+          también se interpreta, y un cancelado sin explicación se lee como un
+          fallo de la página.
+        */}
+        <MatchStateNotice match={match} />
+
+        {/*
+          El enlace al directo. Va antes del marcador en vivo porque quien abre
+          la ficha con el partido en juego viene a verlo, no a leerlo.
+        */}
+        {watchUrl !== null ? (
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-sfx="live"
+            class="flex items-center justify-center gap-2.5 rounded-panel bg-magenta px-5 py-3.5 font-display text-base font-bold text-void transition-transform duration-200 hover:scale-[1.02]"
+          >
+            <span class="live-dot" aria-hidden="true" />
+            Ver este partido en {STREAMER.liveLabel}
+            <ExternalLink aria-hidden="true" className="size-4 opacity-70" />
+          </a>
+        ) : null}
+
+        {match.status === 'LIVE' ? <LiveMatch match={match} client:load /> : null}
+
+        {match.status === 'POSTPONED' ? <PostponementDetail match={match} /> : null}
+
+        {showResult && result !== null && result.points === null ? (
+          <PendingRule rule="P-01">
+            Este resultado es un {VICTORY_TYPE_LABELS[result.victoryType].toLowerCase()} y el
+            reglamento todavía no define cuántos puntos reparte ni con qué coronas figura. El
+            sistema no lo inventa: la puntuación queda pendiente hasta que se decida la regla.
+          </PendingRule>
+        ) : null}
+
+        {/* Datos del partido y del resultado. */}
+        <div class="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+          <Panel>
+            <h2 class="font-display text-base font-semibold">Ficha</h2>
+            <dl class="mt-4 grid gap-4 sm:grid-cols-2">
+              <KeyValue label="Jornada">
+                <a href={`/jornadas/${match.roundNumber}`} class="text-cyan hover:underline">
+                  {roundLabel(match.roundNumber)}
+                </a>
+              </KeyValue>
+              <KeyValue label="Vuelta">{legLabel(match.leg)}</KeyValue>
+              <KeyValue label="Fecha programada">{formatDateTime(match.scheduledAt)}</KeyValue>
+              <KeyValue label="Fecha original">
+                {formatDateTime(match.originalScheduledAt)}
+              </KeyValue>
+              <KeyValue label="Jugado">{formatDateTime(match.playedAt)}</KeyValue>
+              <KeyValue label="Cuenta en la tabla">
+                {countsForStandings(match.status) ? 'Sí' : 'Todavía no'}
+              </KeyValue>
+            </dl>
+
+            {showResult && result !== null ? (
+              <>
+                <h3 class="mt-6 font-display text-base font-semibold">Resultado</h3>
+                <dl class="mt-4 grid gap-4 sm:grid-cols-2">
+                  <KeyValue label="Coronas" mono>
+                    {result.homeCrowns} – {result.awayCrowns}
+                  </KeyValue>
+                  <KeyValue label="Tipo de victoria">
+                    {VICTORY_TYPE_LABELS[result.victoryType]}
+                  </KeyValue>
+                  <KeyValue label={`Diferencia · ${match.home.displayName}`} mono>
+                    {signed(result.crownDiff.home)}
+                  </KeyValue>
+                  <KeyValue label={`Diferencia · ${match.away.displayName}`} mono>
+                    {signed(result.crownDiff.away)}
+                  </KeyValue>
+                  <KeyValue label="Puntos repartidos" mono>
+                    {result.points === null
+                      ? 'Pendiente de definición'
+                      : `${match.home.displayName} ${signed(result.points.home)} · ${match.away.displayName} ${signed(result.points.away)}`}
+                  </KeyValue>
+                  <KeyValue label="Validado">{formatDateTime(result.verifiedAt)}</KeyValue>
+                </dl>
+                {result.version > 1 ? (
+                  <p class="mt-4 rounded-md border border-purple/40 bg-purple/5 px-3 py-2 text-xs text-purple">
+                    Este resultado se corrigió {result.version - 1}{' '}
+                    {result.version - 1 === 1 ? 'vez' : 'veces'}. El historial está más abajo.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p class="mt-6 flex items-center gap-2 text-sm text-muted">
+                <CalendarClock aria-hidden="true" className="size-4" />
+                {match.status === 'POSTPONED'
+                  ? 'Sin resultado: el partido está aplazado.'
+                  : 'Sin resultado todavía.'}
+              </p>
+            )}
+          </Panel>
+
+          <div class="space-y-6">
+            <StreamPanel match={match} />
+            <Panel>
+              <h2 class="font-display text-base font-semibold">Historial</h2>
+              <p class="mt-1 mb-4 text-sm text-muted">
+                Nada se sobrescribe en silencio: cada aplazamiento y cada corrección deja
+                constancia.
+              </p>
+              <MatchTimeline history={match.history} />
+              {match.history.reportCount > 0 ? (
+                <p class="mt-4 border-t border-line pt-3 text-xs text-faint">
+                  {match.history.reportCount}{' '}
+                  {match.history.reportCount === 1 ? 'reporte recibido' : 'reportes recibidos'} de
+                  los jugadores. El detalle de quién reportó qué es información administrativa.
+                </p>
+              ) : null}
+            </Panel>
+          </div>
+        </div>
+
+        {evidence === null ? null : (
+          <MatchEvidencePanel
+            evidence={evidence}
+            homeName={match.home.displayName}
+            awayName={match.away.displayName}
+          />
+        )}
+      </div>
+    )
+  }
+</Public>

@@ -1,0 +1,34 @@
+{
+  "name": "@liga/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API HTTP de la Liga Estabanquitos. Fase 0: arranque, configuracion y reglamento vigente.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "node --watch src/index.ts",
+    "start": "node src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "demo": "node src/scripts/demo-server.ts --full-roster",
+    "demo:datos": "node src/scripts/demo-server.ts --full-roster --scenario",
+    "seed": "node src/scripts/seed.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/cors": "^11.3.0",
+    "@fastify/formbody": "^9.0.0",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/rate-limit": "^11.2.0",
+    "@liga/contracts": "^0.1.0",
+    "@liga/database": "^0.1.0",
+    "@liga/domain": "*",
+    "@node-rs/argon2": "^2.2.0",
+    "fastify": "^5.6.1",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

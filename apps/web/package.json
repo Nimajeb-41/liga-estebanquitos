@@ -1,0 +1,41 @@
+{
+  "name": "@liga/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Frontend publico y panel de administracion de la Liga Estabanquitos 2026-1.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "typecheck": "astro check --minimumSeverity error"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^30.0.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.5",
+    "@astrojs/react": "^6.0.5",
+    "@liga/contracts": "^0.1.0",
+    "@liga/domain": "^0.1.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.1",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.43.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.5.4"
+  }
+}

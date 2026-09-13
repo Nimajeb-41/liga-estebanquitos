@@ -1,0 +1,84 @@
+---
+/**
+ * Portada.
+ *
+ * La única pantalla del sitio donde el espectáculo manda. Aun así, todo lo que
+ * dice es un dato real de la API: el estado, la jornada en curso y el número de
+ * participantes confirmados.
+ */
+import type { TournamentOverview } from '@liga/contracts';
+import { ArrowRight, CalendarDays } from 'lucide-react';
+
+import { LeagueStatusBadge } from './LeagueStatus.tsx';
+
+interface Props {
+  overview: TournamentOverview;
+}
+
+const { overview } = Astro.props;
+---
+
+<section
+  data-hero
+  class="relative isolate overflow-hidden border-b border-line"
+  aria-labelledby="portada-titulo"
+>
+  <div class="grid-backdrop pointer-events-none absolute inset-0" aria-hidden="true"></div>
+  <div
+    class="pointer-events-none absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
+    aria-hidden="true"
+    style="background: radial-gradient(circle, var(--color-purple), transparent 70%)"
+  >
+  </div>
+
+  <div class="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+    <p data-hero-part class="flex flex-wrap items-center gap-3">
+      <LeagueStatusBadge status={overview.status} />
+      {
+        overview.progress.currentRound === null ? null : (
+          <span class="inline-flex items-center gap-1.5 font-mono text-xs text-faint">
+            <CalendarDays aria-hidden="true" className="size-3.5" />
+            JORNADA {String(overview.progress.currentRound).padStart(2, '0')}
+          </span>
+        )
+      }
+    </p>
+
+    <h1
+      data-hero-part
+      id="portada-titulo"
+      class="mt-6 font-display text-5xl leading-[0.95] font-bold tracking-tight sm:text-7xl lg:text-8xl"
+    >
+      <span class="block text-gradient">LIGA</span>
+      <span class="block">ESTABANQUITOS</span>
+    </h1>
+
+    <p data-hero-part class="mt-4 flex items-baseline gap-4">
+      <span class="font-display text-2xl font-semibold text-cyan sm:text-3xl">
+        {overview.season}
+      </span>
+      <span class="rule-gradient hidden h-px flex-1 sm:block"></span>
+    </p>
+
+    <p data-hero-part class="mt-6 max-w-xl text-base text-muted sm:text-lg">
+      {overview.format.players} participantes, {overview.format.rounds} jornadas y{' '}
+      {overview.format.totalMatches} partidos de Clash Royale. Todos contra todos, ida y vuelta.
+    </p>
+
+    <p data-hero-part class="mt-8 flex flex-wrap gap-3">
+      <a
+        href="/clasificacion"
+        class="inline-flex min-h-12 items-center gap-2 rounded-lg border border-cyan/60 bg-cyan/15 px-6 font-semibold text-cyan transition-colors hover:bg-cyan/25"
+      >
+        Ver clasificación
+        <ArrowRight aria-hidden="true" className="size-4" />
+      </a>
+      <a
+        href="/partidos"
+        class="inline-flex min-h-12 items-center gap-2 rounded-lg border border-line-strong bg-elevated px-6 font-semibold text-ink transition-colors hover:border-cyan/50"
+      >
+        Ver partidos
+      </a>
+    </p>
+  </div>
+</section>

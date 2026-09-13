@@ -1,0 +1,221 @@
+---
+/**
+ * Jornadas.
+ *
+ * El calendario completo se ve en `/admin/fixtures`. Esto es otra cosa: una
+ * jornada por fila, con lo que le falta para estar cerrada. Es la vista desde
+ * la que se opera una liga en marcha —«¿por dónde vamos?, ¿qué queda de la
+ * cuatro?»— y por eso lo que se destaca es lo pendiente, no lo jugado.
+ */
+import type { Fixture, TournamentOverview } from '@liga/contracts';
+import { CalendarRange, ChevronRight } from 'lucide-react';
+
+import { SeasonSchedule } from '../../../components/admin/SeasonSchedule.tsx';
+import ApiFailure from '../../../components/ui/ApiFailure.astro';
+import { EmptyState, StatTile } from '../../../components/ui/primitives.tsx';
+import { getFixture, getTournament } from '../../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../../lib/api/messages.ts';
+import { currentSession } from '../../../lib/api/session.ts';
+import { formatDateTime } from '../../../lib/presentation.ts';
+import Admin from '../../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/jornadas');
+
+let fixture: Fixture | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [fixture, overview] = await Promise.all([getFixture(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+/** Lo que hay que saber de una jornada sin abrirla. */
+function summarize(matches: { status: string; scheduledAt: string | null }[]) {
+  const count = (status: string): number => matches.filter((m) => m.status === status).length;
+  const dates = matches
+    .map((match) => match.scheduledAt)
+    .filter((value): value is string => value !== null)
+    .sort();
+
+  return {
+    total: matches.length,
+    completed: count('COMPLETED'),
+    pending: count('SCHEDULED'),
+    live: count('LIVE'),
+    postponed: count('POSTPONED'),
+    disputed: count('DISPUTED'),
+    cancelled: count('CANCELLED'),
+    unscheduled: matches.filter((match) => match.scheduledAt === null).length,
+    /*
+      Una jornada esta cerrada cuando no queda nada que decidir en ella. Un
+      cancelado cuenta como resuelto —no se va a jugar y no puntua—; uno en
+      disputa no, aunque tenga marcador escrito.
+    */
+    resolved: count('COMPLETED') + count('CANCELLED'),
+    firstAt: dates[0] ?? null,
+  };
+}
+
+const rounds = (fixture?.rounds ?? []).map((round) => ({
+  ...round,
+  summary: summarize(round.matches),
+}));
+---
+
+<Admin
+  title="Jornadas"
+  description="Una fila por jornada, con lo que le falta para estar cerrada."
+  session={session}
+>
+  {
+    failure !== null || fixture === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : !fixture.generated ? (
+      <div>
+        <EmptyState
+          title="Todavía no hay calendario"
+          description="Las jornadas aparecen cuando se genera el calendario oficial."
+        />
+        <p class="mt-3 text-center text-sm text-muted">
+          <a href="/admin/fixtures" class="text-cyan underline-offset-2 hover:underline">
+            Ir al calendario
+          </a>
+        </p>
+      </div>
+    ) : (
+      <div class="space-y-6">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile label="Jornadas" value={rounds.length} />
+          <StatTile
+            label="En curso"
+            value={overview?.progress.currentRound ?? '—'}
+            tone="cyan"
+            hint="jornada"
+          />
+          <StatTile
+            label="Cerradas"
+            value={rounds.filter((round) => round.summary.resolved === round.summary.total).length}
+            tone="acid"
+            hint="nada sin resolver"
+          />
+          <StatTile
+            label="Sin fecha"
+            value={rounds.reduce((sum, round) => sum + round.summary.unscheduled, 0)}
+            tone={rounds.some((round) => round.summary.unscheduled > 0) ? 'warning' : 'neutral'}
+            hint="partidos"
+          />
+        </div>
+
+        {overview === null ? null : (
+          <section class="panel p-5" aria-labelledby="programar-temporada">
+            <h2
+              id="programar-temporada"
+              class="flex items-center gap-2 font-display text-base font-semibold"
+            >
+              <CalendarRange aria-hidden="true" className="size-4 text-cyan" />
+              Programar la temporada
+            </h2>
+            <p class="mt-1 mb-4 text-sm text-muted">
+              Tres jornadas cada sábado es el formato de esta liga. Cambia lo que haga falta: las
+              fechas no están decididas hasta que las pongas aquí.
+            </p>
+            <SeasonSchedule overview={overview} client:load />
+          </section>
+        )}
+
+        <div class="relative overflow-x-auto">
+          <table class="w-full min-w-[44rem] border-collapse text-sm">
+            <caption class="sr-only">Estado de cada jornada</caption>
+            <thead>
+              <tr class="border-b border-line text-left text-[11px] tracking-[0.12em] text-faint uppercase">
+                <th scope="col" class="py-2 pr-3 font-medium">
+                  Jornada
+                </th>
+                <th scope="col" class="py-2 pr-3 font-medium">
+                  Primer partido
+                </th>
+                <th scope="col" class="py-2 pr-3 text-right font-medium">
+                  Jugados
+                </th>
+                <th scope="col" class="py-2 pr-3 text-right font-medium">
+                  Pendientes
+                </th>
+                <th scope="col" class="py-2 pr-3 text-right font-medium">
+                  Sin fecha
+                </th>
+                <th scope="col" class="py-2 pr-3 text-right font-medium">
+                  Atascados
+                </th>
+                <th scope="col" class="py-2 font-medium">
+                  <span class="sr-only">Abrir</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rounds.map((round) => {
+                const stuck = round.summary.live + round.summary.postponed + round.summary.disputed;
+                return (
+                  <tr class="border-b border-line/60 last:border-0 hover:bg-elevated/40">
+                    <th scope="row" class="py-2.5 pr-3 text-left font-medium">
+                      <a
+                        href={`/admin/jornadas/${round.number}`}
+                        class="transition-colors hover:text-cyan"
+                      >
+                        Jornada {round.number}
+                      </a>
+                      <span class="ml-2 font-mono text-[11px] text-faint">vuelta {round.leg}</span>
+                    </th>
+                    <td class="py-2.5 pr-3 text-muted">
+                      {round.summary.firstAt === null
+                        ? 'Sin programar'
+                        : formatDateTime(round.summary.firstAt)}
+                    </td>
+                    <td class="py-2.5 pr-3 text-right font-mono tabular-nums">
+                      {round.summary.completed}/{round.summary.total}
+                    </td>
+                    <td class="py-2.5 pr-3 text-right font-mono tabular-nums">
+                      {round.summary.pending}
+                    </td>
+                    <td
+                      class:list={[
+                        'py-2.5 pr-3 text-right font-mono tabular-nums',
+                        round.summary.unscheduled > 0 ? 'text-warning' : 'text-faint',
+                      ]}
+                    >
+                      {round.summary.unscheduled}
+                    </td>
+                    <td
+                      class:list={[
+                        'py-2.5 pr-3 text-right font-mono tabular-nums',
+                        stuck > 0 ? 'text-danger' : 'text-faint',
+                      ]}
+                    >
+                      {stuck}
+                    </td>
+                    <td class="py-2.5 text-right">
+                      <a
+                        href={`/admin/jornadas/${round.number}`}
+                        class="inline-flex items-center gap-1 text-xs text-cyan underline-offset-2 hover:underline"
+                      >
+                        Operar
+                        <ChevronRight aria-hidden="true" className="size-3.5" />
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-xs text-muted">
+          «Atascados» son los que están en directo, aplazados o en disputa: los tres estados en los
+          que el partido no avanza solo. No es un juicio sobre si van tarde, es un recuento.
+        </p>
+      </div>
+    )
+  }
+</Admin>

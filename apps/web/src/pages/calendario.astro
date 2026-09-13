@@ -1,0 +1,101 @@
+---
+/**
+ * Calendario completo.
+ *
+ * Las dieciocho jornadas, cada una desplegable. Se usa `<details>` para que
+ * funcione sin JavaScript; la jornada en curso viene abierta.
+ */
+import type { Fixture, TournamentOverview } from '@liga/contracts';
+import { CalendarDays, ChevronDown } from 'lucide-react';
+
+import { MatchCard } from '../components/matches/MatchCard.tsx';
+import { RoundStatusBadge } from '../components/matches/RoundSummary.tsx';
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { EmptyState } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getFixture, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { formatDate, legLabel, roundLabel } from '../lib/presentation.ts';
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+let fixture: Fixture | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [fixture, overview] = await Promise.all([getFixture(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const current = overview?.progress.currentRound ?? null;
+const meta = pageMeta({
+  title: 'Calendario',
+  description:
+    'Las 18 jornadas de la Liga Estabanquitos 2026-1, con sus partidos, fechas, resultados y aplazamientos.',
+  pathname: '/calendario',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Calendario"
+    description="Ida y vuelta. Un partido aplazado conserva siempre su jornada original."
+    level={1}
+  />
+
+  {
+    failure !== null || fixture === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : !fixture.generated || fixture.rounds.length === 0 ? (
+      <EmptyState
+        title="El calendario todavía no está publicado"
+        description="Se genera cuando la plantilla está completa y el torneo pasa a estado listo. Hasta entonces no hay fechas que mostrar."
+        icon={CalendarDays}
+      />
+    ) : (
+      <div class="space-y-3">
+        {fixture.rounds.map((round) => (
+          <details
+            class="panel overflow-hidden p-0"
+            open={current !== null && round.number === current}
+          >
+            <summary class="flex cursor-pointer list-none flex-wrap items-center gap-3 px-4 py-4 transition-colors hover:bg-elevated/60">
+              <span class="font-display text-lg font-bold text-ink">
+                {roundLabel(round.number)}
+              </span>
+              <span class="font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+                {legLabel(round.leg)}
+              </span>
+              <RoundStatusBadge matches={round.matches} />
+              <span class="ml-auto flex items-center gap-3 text-xs text-muted">
+                {formatDate(round.scheduledAt)}
+                <ChevronDown aria-hidden="true" className="size-4" />
+              </span>
+            </summary>
+            <div class="border-t border-line bg-void/40 p-4">
+              {round.matches.length === 0 ? (
+                <p class="text-sm text-muted">Esta jornada no tiene partidos.</p>
+              ) : (
+                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {round.matches.map((match) => (
+                    <MatchCard match={match} />
+                  ))}
+                </div>
+              )}
+              <p class="mt-4">
+                <a
+                  href={`/jornadas/${round.number}`}
+                  class="text-sm font-medium text-cyan underline-offset-2 hover:underline"
+                >
+                  Ver {roundLabel(round.number).toLowerCase()} en detalle
+                </a>
+              </p>
+            </div>
+          </details>
+        ))}
+      </div>
+    )
+  }
+</Public>

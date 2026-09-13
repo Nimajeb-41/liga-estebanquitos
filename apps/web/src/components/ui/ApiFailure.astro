@@ -1,0 +1,26 @@
+---
+/**
+ * Fallo al cargar datos de la API.
+ *
+ * Se muestra en lugar del contenido cuando la petición no salió. El código
+ * técnico solo aparece en desarrollo: al visitante no le dice nada.
+ */
+import type { FriendlyError } from '../../lib/api/messages.ts';
+import { showTechnicalDetails } from '../../lib/api/messages.ts';
+import { ErrorState } from './primitives.tsx';
+
+interface Props {
+  failure: FriendlyError;
+  title?: string;
+}
+
+const { failure, title } = Astro.props;
+const technical = showTechnicalDetails();
+---
+
+<ErrorState
+  {...title === undefined ? {} : { title }}
+  message={failure.message}
+  code={technical ? failure.code : null}
+  requestId={technical ? failure.requestId : null}
+/>

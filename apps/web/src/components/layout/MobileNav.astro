@@ -1,0 +1,44 @@
+---
+/**
+ * Barra de navegación inferior, solo en móvil.
+ *
+ * Las cinco secciones que se consultan a diario, a un pulgar de distancia y con
+ * objetivos táctiles de 44 px. Los iconos acompañan al texto; nunca lo
+ * sustituyen.
+ */
+import { BarChart3, CalendarDays, Swords, Trophy, Users } from 'lucide-react';
+
+import { isActive, PUBLIC_NAV } from '../../lib/nav.ts';
+
+const ICONS = [Trophy, CalendarDays, Swords, Users, BarChart3];
+const pathname = Astro.url.pathname;
+---
+
+<nav
+  aria-label="Navegación principal"
+  class="panel-glass fixed inset-x-0 bottom-0 z-40 rounded-none border-x-0 border-b-0 border-t border-line pb-[env(safe-area-inset-bottom)] md:hidden"
+>
+  <ul class="grid grid-cols-5">
+    {
+      PUBLIC_NAV.map((item, index) => {
+        const Icon = ICONS[index] ?? Trophy;
+        const active = isActive(pathname, item.href);
+        return (
+          <li>
+            <a
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              class:list={[
+                'flex min-h-14 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors',
+                active ? 'text-cyan' : 'text-faint',
+              ]}
+            >
+              <Icon aria-hidden="true" className="size-5" />
+              {item.short}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</nav>

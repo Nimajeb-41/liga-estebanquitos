@@ -1,0 +1,95 @@
+---
+/**
+ * Layout del panel de administración.
+ *
+ * Más sobrio que el público a propósito: aquí manda la densidad de información.
+ * El tema es el mismo, pero sin efectos que estorben mientras se registra un
+ * resultado en medio de una jornada.
+ */
+import type { SessionUser } from '@liga/contracts';
+import { LogOut, PanelsTopLeft } from 'lucide-react';
+
+import Brand from '../components/layout/Brand.astro';
+import { ADMIN_NAV, isActive } from '../lib/nav.ts';
+import { pageMeta } from '../lib/seo.ts';
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  session: SessionUser;
+}
+
+const { title, description, session } = Astro.props;
+const pathname = Astro.url.pathname;
+
+// El panel nunca se indexa.
+const meta = pageMeta({
+  title: `${title} · Administración`,
+  description: description ?? 'Panel de administración de la Liga Estabanquitos 2026-1.',
+  pathname,
+  noindex: true,
+});
+---
+
+<Base meta={meta}>
+  <div class="flex min-h-screen flex-col lg:flex-row">
+    <aside
+      class="shrink-0 border-b border-line bg-panel lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:border-r lg:border-b-0"
+    >
+      <div class="flex items-center justify-between gap-3 px-4 py-4">
+        <Brand size="sm" href="/" />
+      </div>
+
+      <nav aria-label="Secciones de administración" class="px-2 pb-3">
+        <ul class="relative flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+          {
+            ADMIN_NAV.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+                  class:list={[
+                    'flex min-h-11 items-center rounded-md px-3 text-sm whitespace-nowrap transition-colors',
+                    isActive(pathname, item.href)
+                      ? 'bg-cyan/10 text-cyan'
+                      : 'text-muted hover:bg-elevated hover:text-ink',
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="border-t border-line px-4 py-4 lg:absolute lg:inset-x-0 lg:bottom-0">
+        <p class="truncate text-sm font-medium">{session.displayName}</p>
+        <p class="mt-0.5 font-mono text-[11px] text-faint">{session.role}</p>
+        <form method="post" action="/api/session" class="mt-3">
+          <input type="hidden" name="intent" value="logout" />
+          <button
+            type="submit"
+            class="inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-md border border-line px-3 text-xs text-muted transition-colors hover:border-danger/50 hover:text-danger"
+          >
+            <LogOut aria-hidden="true" className="size-3.5" />
+            Cerrar sesión
+          </button>
+        </form>
+        <p class="mt-3 flex items-center gap-1.5 text-[11px] text-faint">
+          <PanelsTopLeft aria-hidden="true" className="size-3" />
+          <a href="/" class="underline-offset-2 hover:underline">Ver el sitio público</a>
+        </p>
+      </div>
+    </aside>
+
+    <main id="contenido" class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      <header class="mb-6">
+        <h1 class="font-display text-2xl font-bold">{title}</h1>
+        {description === undefined ? null : <p class="mt-1 text-sm text-muted">{description}</p>}
+      </header>
+      <slot />
+    </main>
+  </div>
+</Base>

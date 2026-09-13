@@ -1,0 +1,47 @@
+---
+/**
+ * Página no encontrada.
+ *
+ * Con salidas útiles, no solo un número.
+ */
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+const meta = pageMeta({
+  title: 'Página no encontrada',
+  description: 'La dirección que buscas no existe en la Liga Estabanquitos 2026-1.',
+  pathname: '/404',
+  noindex: true,
+});
+
+const LINKS = [
+  { href: '/clasificacion', label: 'Clasificación' },
+  { href: '/calendario', label: 'Calendario' },
+  { href: '/partidos', label: 'Partidos' },
+  { href: '/jugadores', label: 'Jugadores' },
+];
+---
+
+<Public meta={meta}>
+  <div class="mx-auto max-w-xl py-16 text-center">
+    <p class="font-display text-7xl font-bold text-gradient">404</p>
+    <h1 class="mt-4 font-display text-2xl font-semibold">Esta página no existe</h1>
+    <p class="mt-3 text-sm text-muted">
+      Puede que el enlace esté mal, o que el partido o el jugador que buscas ya no estén ahí.
+    </p>
+    <ul class="mt-8 flex flex-wrap justify-center gap-2">
+      {
+        LINKS.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="inline-flex min-h-11 items-center rounded-lg border border-line px-4 text-sm text-muted transition-colors hover:border-cyan/50 hover:text-ink"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Public>

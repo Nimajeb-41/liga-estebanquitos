@@ -1,0 +1,47 @@
+---
+/**
+ * Partidos (administración).
+ *
+ * Listado con filtros, para llegar rápido al que hay que tocar.
+ */
+import type { Match } from '@liga/contracts';
+
+import { AdminMatchList } from '../../../components/admin/AdminMatchList.tsx';
+import ApiFailure from '../../../components/ui/ApiFailure.astro';
+import { EmptyState } from '../../../components/ui/primitives.tsx';
+import { getMatches } from '../../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../../lib/api/messages.ts';
+import { currentSession } from '../../../lib/api/session.ts';
+import Admin from '../../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/matches');
+
+let matches: Match[] = [];
+let failure: FriendlyError | null = null;
+
+try {
+  matches = await getMatches();
+} catch (error) {
+  failure = friendlyError(error);
+}
+---
+
+<Admin
+  title="Partidos"
+  description="Registrar resultados, aplazar, reprogramar y resolver disputas."
+  session={session}
+>
+  {
+    failure !== null ? (
+      <ApiFailure failure={failure} />
+    ) : matches.length === 0 ? (
+      <EmptyState
+        title="Sin partidos"
+        description="Genera el calendario oficial para que aparezcan aquí."
+      />
+    ) : (
+      <AdminMatchList matches={matches} client:load />
+    )
+  }
+</Admin>

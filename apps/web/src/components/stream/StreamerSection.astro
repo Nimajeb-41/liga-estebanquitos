@@ -1,0 +1,142 @@
+---
+/**
+ * Quién narra la liga.
+ *
+ * La sección dedicada a EsstebannPluss: qué hace, dónde se le encuentra y desde
+ * dónde se va a ver la competición.
+ *
+ * El texto habla de su trabajo, no de su vida. No hay cifras de seguidores: en
+ * un canal que está creciendo cambian cada semana, y publicarlas convierte una
+ * presentación en un boletín de resultados ajeno.
+ */
+import { Camera, Music2, MonitorPlay, Radio } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+import { STREAMER, type StreamerChannel } from '../../lib/streamer.ts';
+
+interface Props {
+  /** Compacta: sin el texto largo. La usa la portada. */
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+
+/*
+  Cada plataforma con su icono.
+
+  Lucide retiró los iconos de marca, así que se usan genéricos que describen el
+  medio. El nombre de la plataforma va escrito justo al lado: es el texto, no el
+  dibujo, lo que identifica el enlace.
+*/
+const ICONS: Readonly<Record<StreamerChannel['id'], LucideIcon>> = {
+  kick: Radio,
+  youtube: MonitorPlay,
+  instagram: Camera,
+  tiktok: Music2,
+};
+
+/** El acento de cada plataforma, para que se distingan de un vistazo. */
+const ACCENT: Readonly<Record<StreamerChannel['id'], string>> = {
+  kick: 'hover:border-acid/60 hover:text-acid',
+  youtube: 'hover:border-danger/60 hover:text-danger',
+  instagram: 'hover:border-magenta/60 hover:text-magenta',
+  tiktok: 'hover:border-cyan/60 hover:text-cyan',
+};
+---
+
+<section class="panel relative overflow-hidden p-6 sm:p-8" aria-labelledby="narrador">
+  {/* Resplandor de fondo. Decorativo: no lleva información. */}
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute -top-24 -right-24 size-64 rounded-full bg-magenta/10 blur-3xl"
+  >
+  </div>
+
+  <div class="relative">
+    <p
+      class="flex items-center gap-2 text-[11px] font-medium tracking-[0.18em] text-magenta uppercase"
+    >
+      <Radio aria-hidden="true" className="size-3.5" />
+      {STREAMER.role}
+    </p>
+
+    <h2 id="narrador" class="mt-2 font-display text-2xl font-bold sm:text-3xl">
+      {STREAMER.name}
+    </h2>
+
+    {
+      compact ? (
+        <p class="mt-3 max-w-2xl text-sm text-muted">
+          Cada jornada de la Liga Estabanquitos se narra en directo desde su canal de Kick. Cuando
+          un partido está en juego, el enlace al directo aparece en esta web.
+        </p>
+      ) : (
+        <div class="mt-4 max-w-2xl space-y-3 text-sm text-muted">
+          <p>
+            EsstebannPluss es quien pone voz a la Liga Estabanquitos. Emite en directo desde{' '}
+            <strong class="text-ink">Kick</strong>, que es donde se sigue cada jornada: los
+            emparejamientos, las remontadas, y los partidos que deciden la tabla.
+          </p>
+          <p>
+            Fuera de la liga, su canal se mueve entre partidas con amigos, vlogs y reviews de
+            hardware —teclados, refrigeración, lo que cae—. Es un canal que se está construyendo, y
+            esta liga es parte de esa construcción: diez participantes, dieciocho jornadas y una
+            competición que se narra entera.
+          </p>
+          <p>
+            Si te lo pierdes en directo, las repeticiones y los mejores momentos van a sus otras
+            redes. Y si quieres enterarte de cuándo se juega, ahí es donde lo cuenta primero.
+          </p>
+        </div>
+      )
+    }
+
+    <ul class="mt-6 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        STREAMER.channels.map((entry) => {
+          const Icon = ICONS[entry.id];
+          return (
+            <li>
+              <a
+                href={entry.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-sfx="hover"
+                class:list={[
+                  'group flex min-h-[3.25rem] items-center gap-3 rounded-lg border px-3.5 py-2.5 text-muted transition-all duration-200 hover:-translate-y-0.5',
+                  entry.primary === true ? 'border-acid/40 bg-acid/5' : 'border-line',
+                  ACCENT[entry.id],
+                ]}
+              >
+                <Icon aria-hidden="true" className="size-5 shrink-0" />
+                <span class="min-w-0">
+                  <span class="block text-sm font-medium text-ink group-hover:text-inherit">
+                    {entry.label}
+                  </span>
+                  <span class="block truncate font-mono text-[11px] text-faint">
+                    {entry.handle}
+                  </span>
+                </span>
+                {entry.primary === true ? (
+                  <span class="ml-auto shrink-0 rounded-full border border-acid/40 px-2 py-0.5 text-[10px] tracking-[0.1em] text-acid uppercase">
+                    En vivo
+                  </span>
+                ) : null}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    {
+      compact ? null : (
+        <p class="mt-5 border-t border-line pt-4 text-xs text-faint">
+          Los enlaces llevan a sus perfiles públicos. La liga no gestiona esos canales ni responde
+          por su contenido: esta sección existe porque sin quien la narre, una liga de diez personas
+          no la ve nadie.
+        </p>
+      )
+    }
+  </div>
+</section>

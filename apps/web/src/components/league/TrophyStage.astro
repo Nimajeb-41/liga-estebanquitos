@@ -1,0 +1,79 @@
+---
+/**
+ * Vitrina del trofeo.
+ *
+ * El trofeo de la Liga Estabanquitos 2026-1, con su foco y su halo. Hasta la
+ * Fase 5 esto era un marcador declarado como tal; ahora es la pieza real.
+ *
+ * Notas de la imagen:
+ *
+ * - Se sirve en WebP con un PNG de reserva, y en dos tamaños. El original pesaba
+ *   1,4 MB, que en una portada de móvil es medio segundo de nada.
+ * - `fetchpriority="high"` porque entra en el primer visor: es lo que hace que
+ *   no aparezca después del texto.
+ * - `width`/`height` reservan el hueco antes de descargarla, y así el resto de
+ *   la página no da un salto cuando llega.
+ */
+
+interface Props {
+  /** Nombre del líder actual, si la competición ya lo tiene. */
+  leader?: string | null;
+  finished?: boolean;
+}
+
+const { leader = null, finished = false } = Astro.props;
+---
+
+<section
+  class="panel scanlines relative overflow-hidden p-8 text-center"
+  aria-labelledby="trofeo-titulo"
+  data-reveal
+>
+  <div class="grid-backdrop pointer-events-none absolute inset-0 opacity-40"></div>
+
+  <div class="relative">
+    <p class="font-mono text-[11px] tracking-[0.28em] text-faint uppercase">El título</p>
+    <h2 id="trofeo-titulo" class="mt-2 font-display text-2xl font-bold sm:text-3xl">
+      {finished ? 'Campeón de la temporada' : 'En juego'}
+    </h2>
+
+    <div class="relative mx-auto mt-8 w-fit">
+      {/* Halo dorado detrás de la copa. Decorativo. */}
+      <div
+        aria-hidden="true"
+        class="absolute -inset-10 rounded-full opacity-70 blur-3xl"
+        style="background: radial-gradient(circle, color-mix(in srgb, var(--color-gold) 30%, transparent), transparent 70%)"
+      >
+      </div>
+
+      <picture>
+        <source
+          srcset="/assets/branding/trofeo-le-2026-sm.webp 360w, /assets/branding/trofeo-le-2026.webp 720w"
+          sizes="(max-width: 640px) 180px, 260px"
+          type="image/webp"
+        />
+        <img
+          data-hero-trophy
+          src="/assets/branding/trofeo-le-2026.png"
+          alt="Trofeo de la Liga Estabanquitos 2026-1: una copa metálica con corona dorada, gemas azules y cintas roja y azul."
+          width="720"
+          height="956"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          class="relative mx-auto h-auto w-[11rem] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)] sm:w-[16rem]"
+        />
+      </picture>
+    </div>
+
+    <p class="mx-auto mt-6 max-w-md text-sm text-muted">
+      {
+        leader === null
+          ? 'Todavía no hay líder: la clasificación empieza a contar con el primer partido finalizado.'
+          : finished
+            ? `${leader} cierra la temporada en lo más alto.`
+            : `${leader} lidera la clasificación, con la temporada aún abierta.`
+      }
+    </p>
+  </div>
+</section>

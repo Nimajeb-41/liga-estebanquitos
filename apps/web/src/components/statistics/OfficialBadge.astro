@@ -1,0 +1,24 @@
+---
+/**
+ * Marca de procedencia de un dato, para páginas Astro.
+ *
+ * No define nada: envuelve `SourceBadge`, que es donde vive la etiqueta. Si
+ * hubiera dos definiciones acabarían diciendo cosas distintas, y esta es
+ * justamente la etiqueta que no puede permitírselo.
+ */
+import { SourceBadge } from './SourceBadge.tsx';
+
+interface Props {
+  source: 'OFFICIAL' | 'OBSERVED';
+  /** Obligatorio en lo observado: sin muestra, un porcentaje no significa nada. */
+  sampleSize?: number;
+  class?: string;
+}
+
+const { source, sampleSize, class: className = '' } = Astro.props;
+
+/** `exactOptionalPropertyTypes`: la muestra se pasa solo si existe. */
+const sample = sampleSize === undefined ? {} : { sampleSize };
+---
+
+<SourceBadge source={source} className={className} {...sample} />

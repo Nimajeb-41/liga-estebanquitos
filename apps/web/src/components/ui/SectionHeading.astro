@@ -1,0 +1,30 @@
+---
+/**
+ * Cabecera de sección para páginas Astro.
+ *
+ * Existe además de la versión React porque el marcado de Astro no se puede
+ * pasar como propiedad a un componente de React: la acción va en un slot.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  level?: 1 | 2 | 3;
+  id?: string;
+}
+
+const { title, description, level = 2, id } = Astro.props;
+const Tag = `h${level}` as 'h1' | 'h2' | 'h3';
+const size = level === 1 ? 'text-3xl sm:text-4xl' : level === 2 ? 'text-xl' : 'text-base';
+---
+
+<div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <Tag {...id === undefined ? {} : { id }} class={`${size} font-semibold`}>{title}</Tag>
+    {
+      description === undefined ? null : (
+        <p class="mt-1 max-w-2xl text-sm text-muted">{description}</p>
+      )
+    }
+  </div>
+  <slot name="action" />
+</div>

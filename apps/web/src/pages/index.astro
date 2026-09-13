@@ -1,0 +1,167 @@
+---
+/**
+ * Portada.
+ *
+ * Presenta la liga y responde en una pantalla a «¿cómo va esto?»: estado,
+ * progreso, quién manda y qué se juega ahora.
+ */
+import type { BroadcastStatus, Match, Standings, TournamentOverview } from '@liga/contracts';
+import { ArrowRight, Radio } from 'lucide-react';
+
+import Hero from '../components/league/Hero.astro';
+import { CompetitionSummary } from '../components/league/LeagueStatus.tsx';
+import TrophyStage from '../components/league/TrophyStage.astro';
+import LiveBanner from '../components/stream/LiveBanner.astro';
+import StreamerSection from '../components/stream/StreamerSection.astro';
+import { MatchCard } from '../components/matches/MatchCard.tsx';
+import { StandingsTable } from '../components/standings/StandingsTable.tsx';
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { EmptyState } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getBroadcast, getMatches, getStandings, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { pageMeta, SITE_NAME } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+let overview: TournamentOverview | null = null;
+let standings: Standings | null = null;
+let matches: Match[] = [];
+let failure: FriendlyError | null = null;
+
+try {
+  [overview, standings, matches] = await Promise.all([
+    getTournament(),
+    getStandings(),
+    getMatches(),
+  ]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+/*
+  El estado del directo va aparte y con su propio `catch`: depende de un
+  servicio de terceros y la portada no puede caerse porque Kick tenga un mal
+  día. Sin respuesta, el aviso simplemente no aparece.
+*/
+let broadcast: BroadcastStatus | null = null;
+try {
+  broadcast = await getBroadcast();
+} catch {
+  broadcast = null;
+}
+
+/** Lo que se juega ahora: primero lo que está en directo, luego lo programado. */
+const live = matches.filter((match) => match.status === 'LIVE');
+const upcoming = matches
+  .filter((match) => match.status === 'SCHEDULED')
+  .sort((left, right) => (left.scheduledAt ?? '').localeCompare(right.scheduledAt ?? ''))
+  .slice(0, 3);
+const spotlight = [...live, ...upcoming].slice(0, 3);
+
+const leader = standings?.rows[0]?.displayName ?? null;
+const top = standings === null ? null : { ...standings, rows: standings.rows.slice(0, 5) };
+
+const meta = pageMeta({
+  title: SITE_NAME,
+  description:
+    'Liga de Clash Royale 2026-1: clasificación, calendario, resultados y estadísticas de los diez participantes.',
+  pathname: '/',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null} wide>
+  {
+    failure === null && overview !== null ? (
+      <>
+        <Hero overview={overview} />
+
+        <div class="mx-auto w-full max-w-7xl space-y-14 px-4 py-12 sm:px-6 sm:py-16">
+          <LiveBanner broadcast={broadcast} sticky />
+
+          <section aria-labelledby="resumen-titulo" data-reveal>
+            <SectionHeading
+              id="resumen-titulo"
+              title="La temporada en números"
+              description="Todo lo de aquí sale de la API. Ninguna cifra está escrita a mano."
+            />
+            <CompetitionSummary overview={overview} />
+          </section>
+
+          <section aria-labelledby="ahora-titulo" data-reveal>
+            <SectionHeading
+              id="ahora-titulo"
+              title={live.length > 0 ? 'Ahora mismo' : 'Próximos partidos'}
+              description={
+                live.length > 0
+                  ? 'Partidos en juego en este momento.'
+                  : 'Los siguientes partidos del calendario.'
+              }
+            >
+              <a
+                slot="action"
+                href="/partidos"
+                class="inline-flex items-center gap-1 text-sm font-medium text-cyan transition-colors hover:text-ink"
+              >
+                Todos los partidos
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </a>
+            </SectionHeading>
+            {spotlight.length === 0 ? (
+              <EmptyState
+                title="No hay partidos programados"
+                description="Cuando se publique el calendario, los próximos partidos aparecerán aquí."
+                icon={Radio}
+              />
+            ) : (
+              <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {spotlight.map((match) => (
+                  <MatchCard
+                    match={match}
+                    watchUrl={broadcast?.live === true ? broadcast.channel.url : null}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section aria-labelledby="tabla-titulo" data-reveal>
+            <SectionHeading
+              id="tabla-titulo"
+              title="Clasificación"
+              description="Las cinco primeras posiciones, en el orden que calcula el reglamento."
+            >
+              <a
+                slot="action"
+                href="/clasificacion"
+                class="inline-flex items-center gap-1 text-sm font-medium text-cyan transition-colors hover:text-ink"
+              >
+                Tabla completa
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </a>
+            </SectionHeading>
+            {top === null ? (
+              <EmptyState title="Clasificación no disponible" />
+            ) : (
+              <StandingsTable
+                standings={top}
+                sortable={false}
+                caption="Cinco primeras posiciones de la Liga Estabanquitos 2026-1"
+                client:visible
+              />
+            )}
+          </section>
+
+          <div data-reveal>
+            <StreamerSection compact />
+          </div>
+
+          <TrophyStage leader={leader} finished={overview.status === 'FINISHED'} />
+        </div>
+      </>
+    ) : (
+      <div class="mx-auto w-full max-w-3xl px-4 py-20 sm:px-6">
+        <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+      </div>
+    )
+  }
+</Public>

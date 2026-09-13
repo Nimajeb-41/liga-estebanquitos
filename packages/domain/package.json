@@ -1,0 +1,31 @@
+{
+  "name": "@liga/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Motor de competicion de la Liga Estabanquitos: estados, roster, fixture, resultados, puntuacion y clasificacion. Sin dependencias de runtime.",
+  "license": "UNLICENSED",
+  "exports": {
+    ".": "./src/index.ts",
+    "./errors": "./src/errors.ts",
+    "./tournament": "./src/tournament/index.ts",
+    "./roster": "./src/roster/index.ts",
+    "./fixture": "./src/fixture/index.ts",
+    "./results": "./src/results/index.ts",
+    "./matches": "./src/matches/index.ts",
+    "./scoring": "./src/scoring/index.ts",
+    "./sanctions": "./src/sanctions/index.ts",
+    "./standings": "./src/standings/index.ts",
+    "./labels": "./src/labels/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

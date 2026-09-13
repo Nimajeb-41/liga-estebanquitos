@@ -1,0 +1,22 @@
+# Infraestructura de desarrollo. En produccion la base de datos es gestionada.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: liga-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: liga
+      POSTGRES_PASSWORD: liga
+      POSTGRES_DB: liga_estabanquitos
+    ports:
+      - '5432:5432'
+    volumes:
+      - liga-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U liga -d liga_estabanquitos']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  liga-postgres-data:

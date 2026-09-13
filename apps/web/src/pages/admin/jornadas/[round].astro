@@ -1,0 +1,157 @@
+---
+/**
+ * Operación de una jornada.
+ *
+ * La pantalla de un día de competición: los cinco partidos de la jornada, en
+ * qué estado está cada uno, y la programación en bloque arriba porque es lo
+ * primero que hace falta cuando se acuerda el horario.
+ *
+ * No duplica ninguna acción de la ficha del partido. Desde aquí se ve y se
+ * programa; registrar resultados, aplazar o resolver disputas sigue estando
+ * donde está, con sus confirmaciones.
+ */
+import type { RoundWithMatches } from '@liga/contracts';
+import { CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { RoundSchedule } from '../../../components/admin/RoundSchedule.tsx';
+import { MatchStatusBadge } from '../../../components/matches/MatchStatus.tsx';
+import ApiFailure from '../../../components/ui/ApiFailure.astro';
+import { StatTile } from '../../../components/ui/primitives.tsx';
+import { getRound, getRounds } from '../../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../../lib/api/messages.ts';
+import { currentSession } from '../../../lib/api/session.ts';
+import { formatDateTime } from '../../../lib/presentation.ts';
+import Admin from '../../../layouts/Admin.astro';
+
+const { round: param } = Astro.params;
+const number = Number(param);
+
+if (!Number.isInteger(number) || number < 1) {
+  return Astro.redirect('/admin/jornadas');
+}
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect(`/admin/login?next=/admin/jornadas/${number}`);
+
+let round: RoundWithMatches | null = null;
+let total = 0;
+let failure: FriendlyError | null = null;
+
+try {
+  const [detail, all] = await Promise.all([getRound(number), getRounds()]);
+  round = detail;
+  total = all.length;
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const matches = round?.matches ?? [];
+const count = (status: string): number => matches.filter((match) => match.status === status).length;
+/* Programados y sin fecha: exactamente lo que tocaría la programación en bloque. */
+const pending = matches.filter(
+  (match) => match.status === 'SCHEDULED' && match.scheduledAt === null,
+).length;
+const stuck = count('LIVE') + count('POSTPONED') + count('DISPUTED');
+---
+
+<Admin
+  title={round === null ? `Jornada ${number}` : `Jornada ${round.number}`}
+  description="Los partidos del día y su programación."
+  session={session}
+>
+  {
+    failure !== null || round === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-6">
+        <nav aria-label="Jornadas" class="flex flex-wrap items-center justify-between gap-3">
+          {number > 1 ? (
+            <a
+              href={`/admin/jornadas/${number - 1}`}
+              class="inline-flex items-center gap-1 text-sm text-cyan underline-offset-2 hover:underline"
+            >
+              <ChevronLeft aria-hidden="true" className="size-4" />
+              Jornada {number - 1}
+            </a>
+          ) : (
+            <span />
+          )}
+          <a href="/admin/jornadas" class="text-sm text-muted underline-offset-2 hover:underline">
+            Todas las jornadas
+          </a>
+          {number < total ? (
+            <a
+              href={`/admin/jornadas/${number + 1}`}
+              class="inline-flex items-center gap-1 text-sm text-cyan underline-offset-2 hover:underline"
+            >
+              Jornada {number + 1}
+              <ChevronRight aria-hidden="true" className="size-4" />
+            </a>
+          ) : (
+            <span />
+          )}
+        </nav>
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile label="Partidos" value={matches.length} hint={`vuelta ${round.leg}`} />
+          <StatTile label="Jugados" value={count('COMPLETED')} tone="acid" />
+          <StatTile label="Sin fecha" value={pending} tone={pending > 0 ? 'warning' : 'neutral'} />
+          <StatTile label="Atascados" value={stuck} tone={stuck > 0 ? 'danger' : 'neutral'} />
+        </div>
+
+        <section class="panel p-5" aria-labelledby="programar">
+          <h2 id="programar" class="flex items-center gap-2 font-display text-base font-semibold">
+            <CalendarRange aria-hidden="true" className="size-4 text-cyan" />
+            Programar la jornada
+          </h2>
+          <p class="mt-1 mb-4 text-sm text-muted">
+            La hora del primer partido y cada cuánto va el siguiente.
+          </p>
+          <RoundSchedule roundNumber={round.number} pending={pending} client:load />
+        </section>
+
+        <section class="panel p-5" aria-labelledby="partidos">
+          <h2 id="partidos" class="font-display text-base font-semibold">
+            Partidos
+          </h2>
+          <ul class="mt-4 space-y-2">
+            {matches.map((match) => (
+              <li>
+                <a
+                  href={`/admin/matches/${match.id}`}
+                  class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line px-3 py-3 transition-colors hover:border-cyan/40"
+                >
+                  <span class="min-w-0">
+                    <span class="block truncate text-sm font-medium">
+                      {match.home.displayName} vs {match.away.displayName}
+                    </span>
+                    <span class="block font-mono text-[11px] text-faint">
+                      {match.scheduledAt === null ? 'sin fecha' : formatDateTime(match.scheduledAt)}
+                      {match.postponementCount > 0
+                        ? ` · aplazado ${match.postponementCount} ${match.postponementCount === 1 ? 'vez' : 'veces'}`
+                        : ''}
+                    </span>
+                  </span>
+                  <span class="flex shrink-0 items-center gap-3">
+                    {match.result === null ? null : (
+                      <span class="font-mono text-sm tabular-nums">
+                        {match.result.homeCrowns}–{match.result.awayCrowns}
+                      </span>
+                    )}
+                    <MatchStatusBadge status={match.status} />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <p class="text-xs text-muted">
+          Desde aquí se ve y se programa. Registrar un resultado, aplazar o resolver una disputa se
+          hace en la ficha del partido, que es donde están los avisos y las confirmaciones que cada
+          operación necesita.
+        </p>
+      </div>
+    )
+  }
+</Admin>

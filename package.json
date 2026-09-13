@@ -1,0 +1,54 @@
+{
+  "name": "liga-estabanquitos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plataforma de competicion para la Liga Estabanquitos 2026-1 (Clash Royale).",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "test:watch": "npm run test:watch --workspace=@liga/domain",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "npm run db:generate --workspace=@liga/database",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "api:dev": "npm run dev --workspace=@liga/api",
+    "verify": "npm run audit:secrets && npm run audit:indexes && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "db:migrate": "npm run db:migrate --workspace=@liga/database",
+    "db:seed": "node apps/api/src/scripts/seed.ts",
+    "db:reset": "docker compose down -v && docker compose up -d postgres",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "demo": "npm run demo --workspace=@liga/api",
+    "web:dev": "npm run dev --workspace=@liga/web",
+    "web:build": "npm run build --workspace=@liga/web",
+    "build": "npm run build --workspaces --if-present",
+    "e2e": "node scripts/e2e.mjs",
+    "spike:clash-royale": "node apps/api/src/scripts/clash-royale-spike.ts",
+    "audit:secrets": "node scripts/audit-secrets.mjs",
+    "clash:retention": "node apps/api/src/scripts/clash-retention.ts",
+    "test:e2e": "node scripts/e2e.mjs",
+    "audit:indexes": "node scripts/audit-indexes.mjs",
+    "api": "node --env-file=.env apps/api/src/index.ts",
+    "liga": "node --env-file=.env apps/api/src/index.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.1",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "^0.14.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.70.0"
+  }
+}

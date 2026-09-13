@@ -1,0 +1,245 @@
+---
+/**
+ * Resumen administrativo.
+ *
+ * Lo que un administrador necesita ver al entrar: en qué punto está la
+ * competición, qué hay pendiente de resolver y qué se ha tocado últimamente.
+ */
+import type {
+  AttentionReport,
+  AuditEntry,
+  Match,
+  OperationalMetrics,
+  PublicSanction,
+  TournamentOverview,
+} from '@liga/contracts';
+import ActionCenter from '../../components/admin/ActionCenter.astro';
+import { TournamentControls } from '../../components/admin/TournamentControls.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { EmptyState, StatTile } from '../../components/ui/primitives.tsx';
+import {
+  getAttention,
+  getAuditLog,
+  getMatches,
+  getMetrics,
+  getSanctions,
+  getTournament,
+} from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession, sessionHeader } from '../../lib/api/session.ts';
+import { formatDateTime, percent } from '../../lib/presentation.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin');
+
+const cookie = sessionHeader(Astro.cookies);
+
+let overview: TournamentOverview | null = null;
+let matches: Match[] = [];
+let sanctions: PublicSanction[] = [];
+let audit: AuditEntry[] = [];
+let failure: FriendlyError | null = null;
+
+try {
+  [overview, matches, sanctions, audit] = await Promise.all([
+    getTournament(),
+    getMatches(),
+    getSanctions(),
+    getAuditLog({ cookie }),
+  ]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const activeSanctions = sanctions.filter((sanction) => sanction.status === 'ACTIVE');
+
+/**
+ * Métricas de operación, con su propio `catch`.
+ *
+ * Son informacion util, no imprescindible: si fallaran, el resumen tiene que
+ * seguir cargando. Nadie deberia quedarse sin panel porque un recuento no
+ * respondio.
+ */
+let metrics: OperationalMetrics | null = null;
+try {
+  metrics = await getMetrics({ cookie });
+} catch {
+  metrics = null;
+}
+
+/* El centro de accion, con el mismo criterio: util, no imprescindible. */
+let attention: AttentionReport | null = null;
+try {
+  attention = await getAttention({ cookie });
+} catch {
+  attention = null;
+}
+---
+
+<Admin
+  title="Resumen"
+  description="Estado de la competición y lo que está pendiente de resolver."
+  session={session}
+>
+  {
+    failure !== null || overview === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-6">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          <StatTile
+            label="Participantes"
+            value={`${overview.roster.confirmed}/${overview.roster.rosterSize}`}
+            tone={overview.roster.complete ? 'acid' : 'warning'}
+          />
+          <StatTile label="Partidos" value={overview.progress.total} />
+          <StatTile label="Finalizados" value={overview.progress.completed} tone="acid" />
+          <StatTile
+            label="En disputa"
+            value={overview.progress.disputed}
+            tone={overview.progress.disputed > 0 ? 'danger' : 'neutral'}
+          />
+          <StatTile
+            label="Aplazados"
+            value={overview.progress.postponed}
+            tone={overview.progress.postponed > 0 ? 'warning' : 'neutral'}
+          />
+          <StatTile
+            label="Sanciones"
+            value={activeSanctions.length}
+            tone={activeSanctions.length > 0 ? 'danger' : 'neutral'}
+            hint="Vigentes"
+          />
+        </div>
+
+        {/*
+          Métricas de operación: recuentos, no valoraciones. Dicen cuántos
+          partidos llevan la fecha pasada sin resultado, no si eso es «mucho».
+          El umbral lo pone quien lo lee.
+        */}
+        {metrics === null ? null : (
+          <section class="panel p-5" aria-labelledby="metricas">
+            <div class="flex flex-wrap items-baseline justify-between gap-3">
+              <h2 id="metricas" class="font-display text-base font-semibold">
+                Operación
+              </h2>
+              <p class="font-mono text-[11px] text-faint">{formatDateTime(metrics.generatedAt)}</p>
+            </div>
+
+            <dl class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div>
+                <dt class="text-[11px] tracking-[0.12em] text-faint uppercase">Fecha pasada</dt>
+                <dd
+                  class={`mt-0.5 font-display text-2xl font-semibold ${metrics.matches.overdue > 0 ? 'text-warning' : ''}`}
+                >
+                  {metrics.matches.overdue}
+                </dd>
+                <dd class="text-xs text-muted">sin resultado</dd>
+              </div>
+              <div>
+                <dt class="text-[11px] tracking-[0.12em] text-faint uppercase">Sin fecha</dt>
+                <dd class="mt-0.5 font-display text-2xl font-semibold">
+                  {metrics.matches.unscheduled}
+                </dd>
+                <dd class="text-xs text-muted">por programar</dd>
+              </div>
+              <div>
+                <dt class="text-[11px] tracking-[0.12em] text-faint uppercase">Candidatos</dt>
+                <dd
+                  class={`mt-0.5 font-display text-2xl font-semibold ${metrics.attention.pendingCandidates > 0 ? 'text-cyan' : ''}`}
+                >
+                  {metrics.attention.pendingCandidates}
+                </dd>
+                <dd class="text-xs text-muted">esperando revisión</dd>
+              </div>
+              <div>
+                <dt class="text-[11px] tracking-[0.12em] text-faint uppercase">Revisar</dt>
+                <dd
+                  class={`mt-0.5 font-display text-2xl font-semibold ${metrics.attention.battlesNeedingReview > 0 ? 'text-warning' : ''}`}
+                >
+                  {metrics.attention.battlesNeedingReview}
+                </dd>
+                <dd class="text-xs text-muted">batallas con conflicto</dd>
+              </div>
+              <div>
+                <dt class="text-[11px] tracking-[0.12em] text-faint uppercase">Vinculados</dt>
+                <dd class="mt-0.5 font-display text-2xl font-semibold">
+                  {metrics.evidence.syncedPlayers}/{metrics.evidence.linkedPlayers}
+                </dd>
+                <dd class="text-xs text-muted">sincronizados</dd>
+              </div>
+              <div>
+                <dt class="text-[11px] tracking-[0.12em] text-faint uppercase">Última sinc.</dt>
+                <dd class="mt-0.5 font-display text-sm font-semibold">
+                  {metrics.evidence.lastSyncAt === null
+                    ? 'Nunca'
+                    : formatDateTime(metrics.evidence.lastSyncAt)}
+                </dd>
+                <dd class="text-xs text-muted">
+                  {metrics.evidence.storedBattles} batallas guardadas
+                </dd>
+              </div>
+            </dl>
+
+            <p class="mt-4 border-t border-line pt-3 text-xs text-muted">
+              Son recuentos, no un diagnóstico: la plataforma no decide qué número es «demasiado».
+              La auditoría registró {metrics.audit.last24h}{' '}
+              {metrics.audit.last24h === 1 ? 'operación' : 'operaciones'} en las últimas 24 horas (
+              <a href="/admin/auditoria" class="text-cyan underline-offset-2 hover:underline">
+                ver el registro
+              </a>
+              ).
+            </p>
+          </section>
+        )}
+
+        {attention === null ? null : <ActionCenter report={attention} />}
+
+        <TournamentControls overview={overview} client:load />
+
+        <div class="grid gap-6">
+          <section class="panel p-5" aria-labelledby="actividad">
+            <h2 id="actividad" class="font-display text-base font-semibold">
+              Actividad reciente
+            </h2>
+            <p class="mt-1 mb-4 text-sm text-muted">
+              Últimas operaciones registradas.{' '}
+              <a href="/admin/audit" class="text-cyan underline-offset-2 hover:underline">
+                Ver la auditoría completa
+              </a>
+              .
+            </p>
+            {audit.length === 0 ? (
+              <EmptyState title="Sin actividad registrada" />
+            ) : (
+              <ol class="space-y-2">
+                {audit.slice(0, 8).map((entry) => (
+                  <li class="flex flex-wrap items-baseline justify-between gap-2 border-b border-line/60 pb-2 last:border-0">
+                    <span class="font-mono text-xs text-ink">{entry.action}</span>
+                    <span class="font-mono text-[11px] text-faint">
+                      {entry.actor ?? 'sistema'} · {formatDateTime(entry.createdAt)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
+
+        <section class="panel p-5" aria-labelledby="progreso">
+          <h2 id="progreso" class="font-display text-base font-semibold">
+            Progreso de la temporada
+          </h2>
+          <p class="mt-2 text-sm text-muted">
+            {overview.progress.completed} de {overview.progress.total} partidos finalizados (
+            {percent(overview.progress.ratio)}%).
+            {overview.progress.currentRound === null
+              ? ' No hay jornada en curso.'
+              : ` Jornada en curso: la ${overview.progress.currentRound}.`}
+          </p>
+        </section>
+      </div>
+    )
+  }
+</Admin>

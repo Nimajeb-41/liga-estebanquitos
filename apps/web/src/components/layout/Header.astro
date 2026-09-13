@@ -1,0 +1,115 @@
+---
+/**
+ * Cabecera pública.
+ *
+ * En escritorio, navegación horizontal. En móvil, la navegación principal vive
+ * en la barra inferior (`MobileNav`) y aquí solo queda la marca y el acceso a
+ * las secciones secundarias, resuelto con `<details>`: sin JavaScript.
+ */
+import { ChevronDown } from 'lucide-react';
+
+import { isActive, PUBLIC_NAV, SECONDARY_NAV } from '../../lib/nav.ts';
+import Brand from './Brand.astro';
+import SoundToggle from './SoundToggle.astro';
+
+const pathname = Astro.url.pathname;
+---
+
+<header
+  class="panel-glass sticky top-0 z-40 rounded-none border-x-0 border-t-0 border-b border-line"
+>
+  <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <Brand size="sm" />
+
+    <nav aria-label="Secciones principales" class="hidden items-center gap-1 md:flex">
+      {
+        PUBLIC_NAV.map((item) => (
+          <a
+            href={item.href}
+            aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+            class:list={[
+              'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              isActive(pathname, item.href)
+                ? 'bg-cyan/10 text-cyan'
+                : 'text-muted hover:bg-elevated hover:text-ink',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+
+      <details class="group relative">
+        <summary
+          class="flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+        >
+          Más
+          <ChevronDown
+            aria-hidden="true"
+            className="size-4 transition-transform group-open:rotate-180"
+          />
+        </summary>
+        <ul class="panel absolute right-0 z-50 mt-2 w-52 p-1.5">
+          {
+            SECONDARY_NAV.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+                  class:list={[
+                    'block rounded-md px-3 py-2 text-sm transition-colors',
+                    isActive(pathname, item.href)
+                      ? 'bg-cyan/10 text-cyan'
+                      : 'text-muted hover:bg-elevated hover:text-ink',
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+    </nav>
+
+    <div class="hidden items-center gap-2 md:flex">
+      <SoundToggle />
+      <a
+        href="/clasificacion"
+        data-sfx="click"
+        class="rounded-lg border border-cyan/50 bg-cyan/10 px-4 py-2 text-sm font-semibold text-cyan transition-colors hover:bg-cyan/20"
+      >
+        Ver clasificación
+      </a>
+    </div>
+
+    <details class="relative md:hidden">
+      <summary
+        class="flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg border border-line px-3 text-sm font-medium text-muted"
+      >
+        Menú
+        <ChevronDown aria-hidden="true" className="size-4" />
+      </summary>
+      <ul class="panel absolute right-0 z-50 mt-2 w-56 p-1.5">
+        {
+          [...PUBLIC_NAV, ...SECONDARY_NAV].map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+                class:list={[
+                  'block rounded-md px-3 py-2.5 text-sm transition-colors',
+                  isActive(pathname, item.href)
+                    ? 'bg-cyan/10 text-cyan'
+                    : 'text-muted hover:bg-elevated hover:text-ink',
+                ]}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </details>
+  </div>
+</header>

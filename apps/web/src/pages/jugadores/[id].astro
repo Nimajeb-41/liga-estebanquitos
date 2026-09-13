@@ -1,0 +1,467 @@
+---
+/**
+ * Ficha de un participante.
+ *
+ * Tres bloques, deliberadamente separados y etiquetados:
+ *
+ *   **Identidad**   Quién es en la liga. El tag de Clash Royale aparece como
+ *                   declarado, nunca como comprobado (P-11 sigue abierta).
+ *   **Oficial**     Rendimiento e historial. Salen del dominio, de los mismos
+ *                   partidos que alimentan la clasificación.
+ *   **Observado**   Lo que Clash Royale devolvió. Evidencia parcial, siempre
+ *                   con el tamaño de la muestra.
+ *
+ * Nada de lo observado sube de categoría por aparecer en esta página. Que se
+ * hayan visto ocho mazos de alguien no verifica que la cuenta sea suya, y que
+ * la cuenta esté vinculada no convierte una batalla en resultado oficial.
+ */
+import type {
+  ObservedPlayerDecks,
+  PlayerStatistics,
+  PublicPlayer,
+  PublicSanction,
+  Standings,
+  TournamentOverview,
+} from '@liga/contracts';
+import { ShieldAlert } from 'lucide-react';
+
+import { ObservedDecks } from '../../components/clash/ObservedDecks.tsx';
+import { ClashRoyalePanel } from '../../components/players/ClashRoyalePanel.tsx';
+import { PlayerAvatar } from '../../components/players/PlayerAvatar.tsx';
+import { FormIndicator } from '../../components/standings/FormIndicator.tsx';
+import OfficialBadge from '../../components/statistics/OfficialBadge.astro';
+import { PlayerHistory } from '../../components/statistics/PlayerHistory.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { Badge, EmptyState, Panel, StatTile } from '../../components/ui/primitives.tsx';
+import { ApiError } from '../../lib/api/client.ts';
+import {
+  getObservedDecks,
+  getPlayer,
+  getPlayerStatistics,
+  getSanctions,
+  getStandings,
+  getTournament,
+} from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import {
+  formatDate,
+  participantStatusLabel,
+  percent,
+  podiumTone,
+  SANCTION_STATUS_LABELS,
+  SANCTION_TYPE_LABELS,
+  signed,
+} from '../../lib/presentation.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import Public from '../../layouts/Public.astro';
+
+const id = Astro.params.id ?? '';
+
+let player: PublicPlayer | null = null;
+let standings: Standings | null = null;
+let sanctions: PublicSanction[] = [];
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [player, standings, sanctions, overview] = await Promise.all([
+    getPlayer(id),
+    getStandings(),
+    getSanctions(),
+    getTournament(),
+  ]);
+} catch (error) {
+  if (error instanceof ApiError && error.status === 404) {
+    return new Response(null, { status: 404 });
+  }
+  failure = friendlyError(error);
+}
+
+/**
+ * Las estadísticas van aparte y con su propio `catch`.
+ *
+ * Quien se retiró o fue sustituido no figura en la tabla, y la API responde 404
+ * a propósito. Eso no es un fallo de la página: es que esa persona ya no tiene
+ * clasificación. La ficha sigue existiendo, sin el bloque de rendimiento.
+ */
+let statistics: PlayerStatistics | null = null;
+if (player !== null) {
+  try {
+    statistics = await getPlayerStatistics(player.id);
+  } catch {
+    statistics = null;
+  }
+}
+
+/**
+ * Los mazos observados también van aparte: si la integración con Clash Royale
+ * está caída o apagada, el resto de la ficha tiene que seguir cargando.
+ */
+let decks: ObservedPlayerDecks | null = null;
+if (player !== null) {
+  try {
+    decks = await getObservedDecks(player.id);
+  } catch {
+    decks = null;
+  }
+}
+
+const row = standings?.rows.find((entry) => entry.playerId === player?.id) ?? null;
+const stats = statistics?.statistics ?? null;
+const ownSanctions = sanctions.filter((sanction) => sanction.playerId === player?.id);
+
+/** Un porcentaje que no existe se dice, no se dibuja como cero. */
+const rate = (value: number | null): string => (value === null ? '—' : `${percent(value)}%`);
+const mean = (value: number | null): string => (value === null ? '—' : value.toFixed(1));
+
+const STREAK_LABEL = { W: 'victorias', L: 'derrotas', D: 'empates' } as const;
+
+const meta = pageMeta({
+  title: player?.displayName ?? 'Jugador',
+  description:
+    player === null
+      ? 'Ficha de un participante de la Liga Estabanquitos 2026-1.'
+      : `Posición, estadísticas, historial y sanciones de ${player.displayName} en la Liga Estabanquitos 2026-1.`,
+  pathname: `/jugadores/${id}`,
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  {
+    failure !== null || player === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-10">
+        <nav aria-label="Ruta" class="text-xs text-muted">
+          <a href="/jugadores" class="underline-offset-2 hover:underline">
+            Jugadores
+          </a>
+        </nav>
+
+        <header class="panel-glass relative overflow-hidden p-6">
+          <div class="grid-backdrop pointer-events-none absolute inset-0 opacity-30" />
+          <div class="relative flex flex-wrap items-center gap-5">
+            <PlayerAvatar name={player.displayName} avatarUrl={player.avatarUrl} size="lg" />
+            <div class="min-w-0 flex-1">
+              <h1 class="font-display text-3xl font-bold sm:text-4xl">{player.displayName}</h1>
+              <p class="mt-2 flex flex-wrap items-center gap-2">
+                <Badge tone={player.status === 'CONFIRMED' ? 'acid' : 'neutral'}>
+                  {participantStatusLabel(player.status)}
+                </Badge>
+                {player.slot === null ? null : (
+                  <span class="font-mono text-xs text-faint">PLAZA {player.slot}</span>
+                )}
+                {player.clashTag === null ? null : (
+                  <span class="font-mono text-xs text-faint">
+                    {player.clashTag}
+                    <span class="ml-1 normal-case">(declarado)</span>
+                  </span>
+                )}
+              </p>
+            </div>
+            {row === null ? null : (
+              <div class="text-center">
+                <span
+                  class={`inline-flex size-14 items-center justify-center rounded-xl border font-display text-2xl font-bold ${podiumTone(row.position)}`}
+                >
+                  {row.position}
+                </span>
+                <p class="mt-1 text-[10px] tracking-[0.14em] text-faint uppercase">Posición</p>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {stats === null ? (
+          <EmptyState
+            title="Todavía sin estadísticas"
+            description="Este participante no figura en la clasificación: o aún no tiene partidos que cuenten, o se retiró de la competición."
+          />
+        ) : (
+          <section aria-labelledby="rendimiento" class="space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="rendimiento" class="font-display text-lg font-semibold">
+                Rendimiento
+              </h2>
+              <OfficialBadge source="OFFICIAL" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <StatTile label="Puntos" value={stats.points} tone="cyan" />
+              <StatTile
+                label="Jugados"
+                value={stats.played}
+                hint={`${stats.wins}V · ${stats.draws}E · ${stats.losses}D`}
+              />
+              <StatTile
+                label="% victorias"
+                value={rate(stats.winRate)}
+                tone="acid"
+                hint={stats.winRate === null ? 'Sin partidos jugados' : undefined}
+              />
+              <StatTile
+                label="Dif. coronas"
+                value={signed(stats.crownDiff)}
+                tone={stats.crownDiff >= 0 ? 'acid' : 'danger'}
+                hint={`${stats.crownsFor} a favor · ${stats.crownsAgainst} en contra`}
+              />
+              <StatTile
+                label="Por 3 coronas"
+                value={stats.maxCrownWins}
+                hint={
+                  stats.maxCrownWinRate === null
+                    ? 'Sin partidos jugados'
+                    : `${percent(stats.maxCrownWinRate)}% de los jugados`
+                }
+              />
+              <StatTile
+                label="Sanciones"
+                value={stats.sanctionPoints}
+                tone={stats.sanctionPoints !== 0 ? 'danger' : 'neutral'}
+                hint={
+                  stats.sanctionPoints === 0
+                    ? 'Ninguna vigente'
+                    : `${stats.matchPoints} de partidos ${signed(stats.sanctionPoints)}`
+                }
+              />
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-2">
+              <Panel>
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 class="font-display text-base font-semibold">Forma y rachas</h3>
+                    <p class="mt-1 text-sm text-muted">
+                      {stats.currentStreak === null
+                        ? 'Sin racha en curso.'
+                        : `Racha actual: ${stats.currentStreak.length} ${STREAK_LABEL[stats.currentStreak.type]} seguidas.`}
+                    </p>
+                  </div>
+                  {row === null ? null : (
+                    <FormIndicator form={row.form} playerName={player.displayName} />
+                  )}
+                </div>
+                <dl class="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4 text-sm sm:grid-cols-3">
+                  <div>
+                    <dt class="text-xs text-faint">Mejor racha de victorias</dt>
+                    <dd class="mt-0.5 font-mono">{stats.bestWinStreak}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-faint">Peor racha de derrotas</dt>
+                    <dd class="mt-0.5 font-mono">{stats.worstLossStreak}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-faint">Movimiento</dt>
+                    <dd class="mt-0.5 font-mono">
+                      {row === null || row.positionChange === null
+                        ? 'Sin referencia'
+                        : `${signed(row.positionChange)} puestos`}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-faint">Coronas por partido</dt>
+                    <dd class="mt-0.5 font-mono">{mean(stats.averageCrownsFor)}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-faint">Coronas encajadas</dt>
+                    <dd class="mt-0.5 font-mono">{mean(stats.averageCrownsAgainst)}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-faint">Puntos de partidos</dt>
+                    <dd class="mt-0.5 font-mono">{stats.matchPoints}</dd>
+                  </div>
+                  {stats.walkoversFor + stats.walkoversAgainst === 0 ? null : (
+                    <div>
+                      <dt class="text-xs text-faint">Incomparecencias</dt>
+                      <dd class="mt-0.5 font-mono">
+                        {stats.walkoversFor} a favor · {stats.walkoversAgainst} en contra
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+                {stats.walkoversFor + stats.walkoversAgainst === 0 ? null : (
+                  <p class="mt-3 border-t border-line pt-3 text-xs text-muted">
+                    Una incomparecencia cuenta como partido jugado y reparte puntos, pero no entra
+                    en las medias de coronas: no hubo batalla que promediar.
+                  </p>
+                )}
+              </Panel>
+
+              <Panel className="min-w-0">
+                <h3 class="font-display text-base font-semibold">Como local y como visitante</h3>
+                <p class="mt-1 text-sm text-muted">
+                  En esta liga «local» no da ventaja de campo: es solo el lado del emparejamiento.
+                  Sirve para ver si alguien rinde distinto según cómo se le sortea.
+                </p>
+                <div class="relative mt-4 overflow-x-auto">
+                  <table class="w-full min-w-[20rem] border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-line text-[11px] tracking-[0.1em] text-faint uppercase">
+                        <th scope="col" class="py-2 text-left font-medium">
+                          Condición
+                        </th>
+                        <th scope="col" class="py-2 text-right font-medium">
+                          PJ
+                        </th>
+                        <th scope="col" class="py-2 text-right font-medium">
+                          V
+                        </th>
+                        <th scope="col" class="py-2 text-right font-medium">
+                          D
+                        </th>
+                        <th scope="col" class="py-2 text-right font-medium">
+                          %V
+                        </th>
+                        <th scope="col" class="py-2 text-right font-medium">
+                          Coronas
+                        </th>
+                        <th scope="col" class="py-2 text-right font-medium">
+                          PTS
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: 'Local', split: stats.home },
+                        { label: 'Visitante', split: stats.away },
+                      ].map((entry) => (
+                        <tr class="border-b border-line/60">
+                          <th scope="row" class="py-2 text-left font-normal">
+                            {entry.label}
+                          </th>
+                          <td class="py-2 text-right font-mono">{entry.split.played}</td>
+                          <td class="py-2 text-right font-mono">{entry.split.wins}</td>
+                          <td class="py-2 text-right font-mono">{entry.split.losses}</td>
+                          <td class="py-2 text-right font-mono">{rate(entry.split.winRate)}</td>
+                          <td class="py-2 text-right font-mono">
+                            {entry.split.crownsFor}–{entry.split.crownsAgainst}
+                          </td>
+                          <td class="py-2 text-right font-mono font-bold">{entry.split.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Panel>
+            </div>
+          </section>
+        )}
+
+        <section aria-labelledby="historial" class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="historial" class="font-display text-lg font-semibold">
+              Historial
+            </h2>
+            <OfficialBadge source="OFFICIAL" />
+          </div>
+          {statistics === null ? (
+            <EmptyState title="Sin historial disponible" />
+          ) : (
+            <PlayerHistory
+              history={statistics.history}
+              playerName={player.displayName}
+              client:load
+            />
+          )}
+        </section>
+
+        <section aria-labelledby="evidencia" class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="evidencia" class="font-display text-lg font-semibold">
+                Evidencia externa
+              </h2>
+              <p class="mt-1 text-sm text-muted">
+                Lo que Clash Royale devolvió sobre las batallas confirmadas de este participante. No
+                decide nada de lo de arriba.
+              </p>
+            </div>
+            <OfficialBadge source="OBSERVED" sampleSize={decks?.sampleSize ?? 0} />
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <Panel>
+              {decks === null ? (
+                <EmptyState
+                  title="Evidencia no disponible"
+                  description="No se pudo consultar la evidencia externa en este momento. El resto de la ficha no depende de ella."
+                />
+              ) : (
+                <ObservedDecks
+                  decks={decks.value.decks}
+                  sampleSize={decks.sampleSize}
+                  playerName={player.displayName}
+                  client:load
+                />
+              )}
+            </Panel>
+
+            <div class="space-y-4">
+              <ClashRoyalePanel clashTag={player.clashTag} linkStatus={player.clashLinkStatus} />
+
+              <Panel as="aside">
+                <h3 class="font-display text-base font-semibold">Qué no dice esta sección</h3>
+                <ul class="mt-2 space-y-2 text-sm text-muted">
+                  <li>
+                    No es el mazo oficial de nadie. La liga no tiene registro de mazos declarados:
+                    depende de la regla P-04, que todavía no fija si se puede cambiar entre partidas
+                    ni si hay que anunciarlo antes de jugar.
+                  </li>
+                  <li>
+                    No son todas sus partidas, solo las que la API devolvió y administración
+                    confirmó como partidos de la liga.
+                  </li>
+                  <li>
+                    No verifica identidad. La cuenta está declarada por el participante, no
+                    comprobada por nadie.
+                  </li>
+                </ul>
+              </Panel>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="sanciones-jugador">
+          <h2 id="sanciones-jugador" class="mb-3 font-display text-lg font-semibold">
+            Sanciones
+          </h2>
+          {ownSanctions.length === 0 ? (
+            <EmptyState
+              title="Sin sanciones"
+              description="Este participante no tiene ninguna sanción registrada."
+              icon={ShieldAlert}
+            />
+          ) : (
+            <ul class="space-y-2">
+              {ownSanctions.map((sanction) => (
+                <li class="panel flex flex-wrap items-center justify-between gap-3 p-4">
+                  <span>
+                    <span class="block text-sm font-medium">
+                      {SANCTION_TYPE_LABELS[sanction.type] ?? sanction.type}
+                    </span>
+                    <span class="mt-0.5 block text-sm text-muted">{sanction.reason}</span>
+                    <span class="mt-1 block font-mono text-[11px] text-faint">
+                      {formatDate(sanction.issuedAt)}
+                    </span>
+                  </span>
+                  <span class="flex items-center gap-3">
+                    <Badge tone={sanction.status === 'ACTIVE' ? 'danger' : 'neutral'}>
+                      {SANCTION_STATUS_LABELS[sanction.status] ?? sanction.status}
+                    </Badge>
+                    <span
+                      class={`font-display text-lg font-bold ${
+                        sanction.status === 'ACTIVE' ? 'text-danger' : 'text-faint line-through'
+                      }`}
+                    >
+                      {sanction.points}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    )
+  }
+</Public>

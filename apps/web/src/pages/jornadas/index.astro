@@ -1,0 +1,83 @@
+---
+/**
+ * Índice de jornadas.
+ *
+ * Una rejilla con las dieciocho, para saltar a cualquiera de un toque. El
+ * detalle vive en `/jornadas/[numero]`; el despliegue completo, en
+ * `/calendario`.
+ */
+import type { Fixture, TournamentOverview } from '@liga/contracts';
+import { CalendarDays } from 'lucide-react';
+
+import { RoundStatusBadge } from '../../components/matches/RoundSummary.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { EmptyState } from '../../components/ui/primitives.tsx';
+import SectionHeading from '../../components/ui/SectionHeading.astro';
+import { getFixture, getTournament } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { formatDate, legLabel } from '../../lib/presentation.ts';
+import { pageMeta } from '../../lib/seo.ts';
+import Public from '../../layouts/Public.astro';
+
+let fixture: Fixture | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [fixture, overview] = await Promise.all([getFixture(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const current = overview?.progress.currentRound ?? null;
+const meta = pageMeta({
+  title: 'Jornadas',
+  description: 'Las 18 jornadas de la Liga Estabanquitos 2026-1, con su estado y su fecha.',
+  pathname: '/jornadas',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Jornadas"
+    description="Nueve de ida y nueve de vuelta. Cinco partidos cada una."
+    level={1}
+  />
+
+  {
+    failure !== null || fixture === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : fixture.rounds.length === 0 ? (
+      <EmptyState
+        title="El calendario todavía no está publicado"
+        description="Las jornadas aparecen cuando se genera el calendario oficial."
+        icon={CalendarDays}
+      />
+    ) : (
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {fixture.rounds.map((round) => (
+          <li>
+            <a
+              href={`/jornadas/${round.number}`}
+              class:list={[
+                'panel flex h-full flex-col gap-2 p-4 transition-colors hover:border-cyan/40',
+                current === round.number ? 'edge-cyan' : '',
+              ]}
+            >
+              <span class="flex items-baseline justify-between gap-2">
+                <span class="font-display text-3xl font-bold text-ink">
+                  {String(round.number).padStart(2, '0')}
+                </span>
+                <span class="font-mono text-[10px] tracking-[0.16em] text-faint uppercase">
+                  {legLabel(round.leg)}
+                </span>
+              </span>
+              <RoundStatusBadge matches={round.matches} />
+              <span class="mt-auto text-xs text-muted">{formatDate(round.scheduledAt)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Public>

@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788858091111,
+      "tag": "0000_init",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788860678013,
+      "tag": "0001_fase1_postponements_reports_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788878338110,
+      "tag": "0002_fase2_stream_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789018713799,
+      "tag": "0003_fase3_clash_royale",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789029487044,
+      "tag": "0004_fase4_retention_observations",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789035083512,
+      "tag": "0005_fase4_audit_request_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789046690126,
+      "tag": "0006_fase4_foreign_key_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789074997413,
+      "tag": "0007_fase5_walkover_p01",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789258542273,
+      "tag": "0008_fase5_season_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789259827953,
+      "tag": "0009_fase5_season_planning",
+      "breakpoints": true
+    }
+  ]
+}

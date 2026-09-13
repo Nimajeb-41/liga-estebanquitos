@@ -1,0 +1,50 @@
+---
+/**
+ * Lo que la página necesita en el navegador.
+ *
+ * Movimiento, sonido y registro de la PWA, enganchados una sola vez. Va en el
+ * layout base para que ninguna página tenga que acordarse de incluirlo.
+ *
+ * Con las transiciones de vista el documento no se recarga entre páginas, así
+ * que hay dos momentos: la carga inicial y cada navegación posterior. Los
+ * oyentes globales se enganchan una vez; lo que depende del contenido se
+ * rehace en cada una.
+ */
+---
+
+<script>
+  import { initMotion, teardownMotion } from '../../scripts/motion.ts';
+  import { initSfx } from '../../scripts/sfx.ts';
+
+  /*
+    Lo que solo puede pasar una vez por documento. Con transiciones de vista
+    este script se reevalúa en cada navegación, y sin la guarda acabaríamos
+    apilando oyentes en cada clic.
+  */
+  const w = window as typeof window & { __ligaRuntime?: boolean };
+  if (w.__ligaRuntime !== true) {
+    w.__ligaRuntime = true;
+    initSfx();
+
+    document.addEventListener('astro:before-swap', () => teardownMotion());
+    document.addEventListener('astro:page-load', () => initMotion());
+
+    /*
+      Service worker.
+
+      Solo en producción: en desarrollo interceptaría las peticiones de Vite y
+      serviría módulos viejos, que es de las cosas más difíciles de diagnosticar
+      que le pueden pasar a alguien.
+    */
+    if ('serviceWorker' in navigator && import.meta.env.PROD) {
+      window.addEventListener('load', () => {
+        void navigator.serviceWorker.register('/sw.js').catch(() => {
+          /* Sin service worker el sitio funciona igual, solo que sin offline. */
+        });
+      });
+    }
+  }
+
+  // La primera carga no dispara `astro:page-load` en todas las versiones.
+  initMotion();
+</script>

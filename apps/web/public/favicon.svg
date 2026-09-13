@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Liga Estabanquitos">
+  <rect width="32" height="32" rx="7" fill="#05060A"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5.5" fill="none" stroke="#00E5FF" stroke-opacity="0.5"/>
+  <text x="16" y="21.5" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700"
+        text-anchor="middle" fill="#00E5FF">LE</text>
+</svg>

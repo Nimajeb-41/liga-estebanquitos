@@ -1,0 +1,84 @@
+---
+/**
+ * Aviso de directo.
+ *
+ * Se enciende **solo cuando de verdad hay algo que ver**: el canal emitiendo
+ * Clash Royale y partidos de la liga en juego. Esa doble condición la resuelve
+ * el backend (`/api/v1/broadcast`); aquí solo se pinta.
+ *
+ * Es el único elemento del sitio que reclama atención, y por eso no se permite
+ * mentir. Un banner permanente que a veces no corresponde a nada deja de
+ * mirarse en una semana.
+ *
+ * Cuando no se puede comprobar el estado del canal, **no se enciende**. Ante la
+ * duda, la web no afirma que hay directo.
+ */
+import type { BroadcastStatus } from '@liga/contracts';
+import { ExternalLink, Radio } from 'lucide-react';
+
+interface Props {
+  broadcast: BroadcastStatus | null;
+  /** Fija en la parte superior de la ventana. La portada la quiere así. */
+  sticky?: boolean;
+}
+
+const { broadcast, sticky = false } = Astro.props;
+
+const featured = broadcast?.matches[0];
+const rest = (broadcast?.matches.length ?? 0) - 1;
+---
+
+{
+  broadcast === null || !broadcast.live ? null : (
+    <aside
+      class:list={[
+        'live-banner relative overflow-hidden rounded-panel border border-magenta/50 bg-magenta/5',
+        sticky ? 'sticky top-2 z-30' : '',
+      ]}
+      aria-label="Partido en directo"
+    >
+      <div
+        aria-hidden="true"
+        class="live-banner__sweep pointer-events-none absolute inset-0 opacity-60"
+      />
+
+      <div class="relative flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+        <p class="flex items-center gap-2">
+          <span class="live-dot" aria-hidden="true" />
+          <span class="font-display text-sm font-bold tracking-[0.12em] text-magenta uppercase">
+            En directo
+          </span>
+        </p>
+
+        <p class="min-w-0 flex-1 text-sm">
+          {featured === undefined ? null : (
+            <a
+              href={`/partidos/${featured.id}`}
+              class="truncate underline-offset-2 hover:underline"
+              data-sfx="hover"
+            >
+              {featured.home} <span class="text-faint">vs</span> {featured.away}
+            </a>
+          )}
+          {rest > 0 ? (
+            <span class="ml-2 text-xs text-muted">
+              y {rest} {rest === 1 ? 'partido más' : 'partidos más'}
+            </span>
+          ) : null}
+        </p>
+
+        <a
+          href={broadcast.channel.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-sfx="live"
+          class="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-magenta px-4 text-sm font-semibold text-void transition-transform duration-200 hover:scale-[1.03]"
+        >
+          <Radio aria-hidden="true" className="size-4" />
+          Ver en directo
+          <ExternalLink aria-hidden="true" className="size-3.5 opacity-70" />
+        </a>
+      </div>
+    </aside>
+  )
+}

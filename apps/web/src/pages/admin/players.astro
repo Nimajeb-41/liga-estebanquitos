@@ -1,0 +1,39 @@
+---
+/**
+ * Participantes (administración).
+ */
+import type { AdminPlayersResponse } from '@liga/contracts';
+
+import { PlayersAdmin } from '../../components/admin/PlayersAdmin.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { getAdminPlayers } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession, sessionHeader } from '../../lib/api/session.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/players');
+
+let data: AdminPlayersResponse | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  data = await getAdminPlayers({ cookie: sessionHeader(Astro.cookies) });
+} catch (error) {
+  failure = friendlyError(error);
+}
+---
+
+<Admin
+  title="Participantes"
+  description="Alta, confirmación, plazas, retirada y sustitución. Las restricciones las aplica el motor de competición."
+  session={session}
+>
+  {
+    failure !== null || data === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <PlayersAdmin data={data} client:load />
+    )
+  }
+</Admin>

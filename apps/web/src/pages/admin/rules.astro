@@ -1,0 +1,182 @@
+---
+/**
+ * Reglamento (administración).
+ *
+ * Solo lectura, y a propósito: una regla no se cierra desde una pantalla. Se
+ * decide, se anota en `docs/pending-rules.md`, se traslada a la configuración
+ * del torneo, se le pone un test y se sube la versión del reglamento.
+ */
+import type { Rules } from '@liga/contracts';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { Badge, PendingRule } from '../../components/ui/primitives.tsx';
+import { getRules } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession } from '../../lib/api/session.ts';
+import { tiebreakerLabel } from '../../lib/presentation.ts';
+import { RULES, RULES_UPDATED_AT } from '../../lib/rules-catalog.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/rules');
+
+let rules: Rules | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  rules = await getRules();
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const decided = RULES.filter((rule) => rule.status === 'DECIDED');
+const pending = RULES.filter((rule) => rule.status === 'PENDING');
+---
+
+<Admin
+  title="Reglamento"
+  description="Lo que el motor hace cumplir hoy, y lo que sigue sin decidirse."
+  session={session}
+>
+  {
+    failure !== null || rules === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-6">
+        <section class="panel p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="font-display text-base font-semibold">Configuración vigente</h2>
+            <span class="font-mono text-xs text-faint">{rules.rulesVersion}</span>
+          </div>
+          <dl class="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+            <div>
+              <dt class="text-xs text-faint">Victoria</dt>
+              <dd class="mt-0.5 font-mono">{rules.scoring.win}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Victoria con máx. coronas</dt>
+              <dd class="mt-0.5 font-mono">{rules.scoring.winWithMaxCrowns}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Derrota</dt>
+              <dd class="mt-0.5 font-mono">{rules.scoring.loss}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Empate</dt>
+              <dd class="mt-0.5 font-mono">
+                {rules.scoring.draw === null ? 'null (no existe)' : rules.scoring.draw}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Incomparecencia</dt>
+              <dd class="mt-0.5 font-mono text-warning">
+                {rules.scoring.walkoverWin === null ? 'null (P-01)' : rules.scoring.walkoverWin}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Coronas de incomparecencia</dt>
+              <dd class="mt-0.5 font-mono text-warning">
+                {rules.scoring.walkoverCrowns === null
+                  ? 'null (P-01)'
+                  : rules.scoring.walkoverCrowns.join('-')}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Sanción por defecto</dt>
+              <dd class="mt-0.5 font-mono">{rules.sanctions.defaultPoints}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Plazo de impugnación</dt>
+              <dd class="mt-0.5 font-mono">{rules.disputes.windowHours} h</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Tolerancia</dt>
+              <dd class="mt-0.5 font-mono">{rules.noShow.toleranceMinutes} min</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Automatismo por tolerancia</dt>
+              <dd class="mt-0.5 font-mono">{rules.noShow.automatic ? 'sí' : 'no'}</dd>
+            </div>
+            <div class="col-span-2">
+              <dt class="text-xs text-faint">Desempates</dt>
+              <dd class="mt-0.5 text-xs">{rules.tiebreakers.map(tiebreakerLabel).join(' → ')}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {rules.pending.walkovers ? (
+          <PendingRule rule="P-01">
+            Mientras esta regla siga abierta, el motor rechaza registrar una incomparecencia. Es
+            deliberado: no hay puntuación por defecto escondida en el código.
+          </PendingRule>
+        ) : null}
+
+        <section>
+          <div class="mb-3 flex flex-wrap items-center gap-3">
+            <h2 class="font-display text-base font-semibold">Decididas</h2>
+            <Badge tone="acid" icon={CheckCircle2}>
+              {decided.length}
+            </Badge>
+          </div>
+          <ul class="space-y-2">
+            {decided.map((rule) => (
+              <li class="panel flex flex-wrap items-baseline gap-3 p-4">
+                <span class="font-mono text-sm font-bold text-acid">{rule.id}</span>
+                <span class="min-w-0 flex-1 text-sm">{rule.title}</span>
+                {rule.decidedOn === null ? null : (
+                  <span class="font-mono text-[11px] text-faint">{rule.decidedOn}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section>
+          <div class="mb-3 flex flex-wrap items-center gap-3">
+            <h2 class="font-display text-base font-semibold">Pendientes</h2>
+            <Badge tone="warning" icon={AlertTriangle}>
+              {pending.length}
+            </Badge>
+          </div>
+          <ul class="space-y-2">
+            {pending.map((rule) => (
+              <li class="rounded-panel border border-dashed border-warning/40 bg-warning/[0.03] p-4">
+                <div class="flex flex-wrap items-baseline gap-3">
+                  <span class="font-mono text-sm font-bold text-warning">{rule.id}</span>
+                  <span class="min-w-0 flex-1 text-sm">{rule.title}</span>
+                  {rule.group === null ? null : (
+                    <span class="font-mono text-[10px] tracking-wide text-faint uppercase">
+                      {rule.group}
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="panel p-5">
+          <h2 class="font-display text-base font-semibold">Cómo se cierra una regla</h2>
+          <ol class="mt-3 space-y-1.5 text-sm text-muted">
+            <li>
+              1. Se decide y se anota en{' '}
+              <code class="font-mono text-xs">docs/pending-rules.md</code>, con fecha.
+            </li>
+            <li>2. Se traslada a la configuración del torneo, no al código.</li>
+            <li>3. Se añade el test que la fija.</li>
+            <li>4. Se sube la versión del reglamento.</li>
+            <li>
+              5. Se documenta en <code class="font-mono text-xs">docs/tournament-rules.md</code>.
+            </li>
+          </ol>
+          <p class="mt-3 text-xs text-faint">
+            Ninguna regla se cierra escribiendo un <code class="font-mono">if</code> en medio del
+            motor, ni desde esta pantalla.
+            {RULES_UPDATED_AT === null ? '' : ` Última actualización: ${RULES_UPDATED_AT}.`}
+          </p>
+        </section>
+      </div>
+    )
+  }
+</Admin>

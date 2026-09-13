@@ -1,0 +1,272 @@
+---
+/**
+ * Cara a cara.
+ *
+ * El historial entre dos participantes: cuántas veces se han visto, cómo
+ * quedaron y quién manda. Es la pregunta que precede a cualquier partido de una
+ * liga de ida y vuelta, y hasta ahora había que reconstruirla a mano desde el
+ * calendario.
+ *
+ * La elección viaja en la URL (`?a=&b=`) para que un enlace concreto se pueda
+ * compartir. El formulario funciona sin JavaScript: es un `GET` normal.
+ *
+ * Solo cuenta lo jugado. Un partido pendiente entre los dos no aparece aquí:
+ * esto responde «qué ha pasado», no «qué queda».
+ */
+import type { HeadToHead, PlayersResponse } from '@liga/contracts';
+import { Swords } from 'lucide-react';
+
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { EmptyState, Panel } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getHeadToHead, getPlayers, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { roundLabel } from '../lib/presentation.ts';
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+const a = Astro.url.searchParams.get('a') ?? '';
+const b = Astro.url.searchParams.get('b') ?? '';
+
+let roster: PlayersResponse | null = null;
+let rulesVersion: string | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  const [players, overview] = await Promise.all([getPlayers(), getTournament()]);
+  roster = players;
+  rulesVersion = overview.rulesVersion;
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+/*
+  El enfrentamiento se pide aparte: que dos slugs no existan es un error del
+  visitante, no de la página, y no debe tirar abajo el formulario.
+*/
+let record: HeadToHead | null = null;
+let recordFailure: FriendlyError | null = null;
+if (a !== '' && b !== '' && a !== b) {
+  try {
+    record = await getHeadToHead(a, b);
+  } catch (error) {
+    recordFailure = friendlyError(error);
+  }
+}
+
+/** Los que pueden aparecer en un cara a cara: los que están en competición. */
+const selectable = (roster?.players ?? []).filter(
+  (player) => player.status === 'CONFIRMED' || player.status === 'REGISTERED',
+);
+
+const meta = pageMeta({
+  title: 'Cara a cara',
+  description:
+    'Historial entre dos participantes de la Liga Estabanquitos 2026-1: partidos jugados, victorias y coronas.',
+  pathname: '/cara-a-cara',
+});
+
+const field =
+  'min-h-11 w-full rounded-lg border border-line bg-elevated px-3 text-sm text-ink focus:border-cyan focus:outline-none';
+---
+
+<Public meta={meta} rulesVersion={rulesVersion}>
+  <SectionHeading
+    title="Cara a cara"
+    description="Qué ha pasado entre dos participantes. Solo cuenta lo jugado."
+    level={1}
+  />
+
+  {
+    failure !== null || roster === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-6">
+        <form method="get" class="panel p-5">
+          <div class="grid gap-3 sm:grid-cols-[1fr_auto_1fr_auto] sm:items-end">
+            <div>
+              <label for="jugador-a" class="mb-1.5 block text-xs text-faint">
+                Participante
+              </label>
+              <select id="jugador-a" name="a" class={field}>
+                <option value="">Elige a uno</option>
+                {selectable.map((player) => (
+                  <option value={player.slug} selected={player.slug === a}>
+                    {player.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <p class="hidden pb-3 text-center text-sm text-faint sm:block">vs</p>
+
+            <div>
+              <label for="jugador-b" class="mb-1.5 block text-xs text-faint">
+                Rival
+              </label>
+              <select id="jugador-b" name="b" class={field}>
+                <option value="">Elige al otro</option>
+                {selectable.map((player) => (
+                  <option value={player.slug} selected={player.slug === b}>
+                    {player.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-cyan/50 bg-cyan/10 px-4 text-sm font-medium text-cyan transition-colors hover:bg-cyan/20"
+            >
+              <Swords aria-hidden="true" className="size-4" />
+              Comparar
+            </button>
+          </div>
+        </form>
+
+        {recordFailure !== null ? <ApiFailure failure={recordFailure} /> : null}
+
+        {record === null ? (
+          recordFailure === null ? (
+            <EmptyState
+              title="Elige a dos participantes"
+              description="El historial aparece en cuanto selecciones a los dos."
+            />
+          ) : null
+        ) : (
+          <>
+            <section class="panel p-5" aria-labelledby="balance">
+              <h2 id="balance" class="sr-only">
+                Balance
+              </h2>
+              <div class="grid grid-cols-3 items-center gap-3 text-center">
+                <p class="min-w-0">
+                  <a
+                    href={`/jugadores/${record.players[0]!.slug}`}
+                    class="block truncate font-display text-lg font-semibold underline-offset-2 hover:text-cyan hover:underline"
+                  >
+                    {record.players[0]!.displayName}
+                  </a>
+                  <span class="mt-1 block font-display text-4xl font-bold tabular-nums">
+                    {record.wins[0]}
+                  </span>
+                  <span class="text-xs text-muted">
+                    {record.wins[0] === 1 ? 'victoria' : 'victorias'}
+                  </span>
+                </p>
+
+                <p class="text-sm text-faint">
+                  <span class="block font-mono text-2xl tabular-nums">{record.played}</span>
+                  <span class="block">
+                    {record.played === 1 ? 'partido jugado' : 'partidos jugados'}
+                  </span>
+                  {record.draws > 0 ? (
+                    <span class="mt-1 block text-xs">
+                      {record.draws} {record.draws === 1 ? 'empate' : 'empates'}
+                    </span>
+                  ) : null}
+                </p>
+
+                <p class="min-w-0">
+                  <a
+                    href={`/jugadores/${record.players[1]!.slug}`}
+                    class="block truncate font-display text-lg font-semibold underline-offset-2 hover:text-cyan hover:underline"
+                  >
+                    {record.players[1]!.displayName}
+                  </a>
+                  <span class="mt-1 block font-display text-4xl font-bold tabular-nums">
+                    {record.wins[1]}
+                  </span>
+                  <span class="text-xs text-muted">
+                    {record.wins[1] === 1 ? 'victoria' : 'victorias'}
+                  </span>
+                </p>
+              </div>
+
+              <p class="mt-4 border-t border-line pt-3 text-center text-sm text-muted">
+                Coronas {record.crowns[0]}–{record.crowns[1]}.{' '}
+                {record.played === 0
+                  ? 'Todavía no se han enfrentado.'
+                  : record.leaderId === null
+                    ? 'Están igualados en victorias.'
+                    : `Manda ${
+                        record.players.find((player) => player.id === record?.leaderId)
+                          ?.displayName ?? ''
+                      }.`}
+              </p>
+            </section>
+
+            {record.matches.length === 0 ? null : (
+              <section class="panel p-5" aria-labelledby="enfrentamientos">
+                <h2 id="enfrentamientos" class="font-display text-base font-semibold">
+                  Los enfrentamientos
+                </h2>
+                <ul class="mt-4 space-y-2">
+                  {record.matches.map((match) => {
+                    const homeIsA = match.homeId === record!.players[0]!.id;
+                    const home = homeIsA ? record!.players[0]! : record!.players[1]!;
+                    const away = homeIsA ? record!.players[1]! : record!.players[0]!;
+                    return (
+                      <li>
+                        <a
+                          href={`/partidos/${match.matchId}`}
+                          class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line px-3 py-2.5 transition-colors hover:border-cyan/40"
+                        >
+                          <span class="min-w-0 text-sm">
+                            <span class="block truncate">
+                              {home.displayName} vs {away.displayName}
+                            </span>
+                            <span class="font-mono text-[11px] text-faint">
+                              {roundLabel(match.roundNumber)} · vuelta {match.leg}
+                            </span>
+                          </span>
+                          <span class="shrink-0 text-right">
+                            {match.walkover ? (
+                              <span class="text-sm text-warning">Incomparecencia</span>
+                            ) : (
+                              <span class="font-mono text-lg tabular-nums">
+                                {match.homeCrowns}–{match.awayCrowns}
+                              </span>
+                            )}
+                            <span class="block text-[11px] text-faint">
+                              {match.winnerId === null
+                                ? 'empate'
+                                : `ganó ${
+                                    record!.players.find((player) => player.id === match.winnerId)
+                                      ?.displayName ?? ''
+                                  }`}
+                            </span>
+                          </span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+          </>
+        )}
+
+        <Panel as="aside">
+          <h2 class="font-display text-base font-semibold">Qué cuenta y qué no</h2>
+          <p class="mt-2 text-sm text-muted">
+            Solo los partidos que ya cuentan para la clasificación. Un partido aplazado, cancelado o
+            con el resultado en disputa no aparece aquí hasta que se resuelva.
+          </p>
+          <p class="mt-2 text-sm text-muted">
+            Una incomparecencia se marca como tal en vez de mostrar un marcador: no hubo batalla, y
+            las coronas de los dos siguen a cero en ese partido.
+          </p>
+          <p class="mt-2 text-sm text-muted">
+            El enfrentamiento directo también es uno de los criterios de desempate de la tabla. Cómo
+            se aplica está en el{' '}
+            <a href="/reglamento" class="text-cyan underline-offset-2 hover:underline">
+              reglamento
+            </a>
+            .
+          </p>
+        </Panel>
+      </div>
+    )
+  }
+</Public>

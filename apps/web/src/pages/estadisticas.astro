@@ -1,0 +1,226 @@
+---
+/**
+ * Estadísticas de la temporada.
+ *
+ * Todo lo de esta página es **oficial**: sale del dominio, de los mismos
+ * partidos que alimentan la clasificación. Lo que Clash Royale observa vive en
+ * `/cartas` y en la ficha de cada partido, siempre marcado como tal.
+ *
+ * Dos cosas que la página nunca hace: contar un aplazado como jugado, y
+ * presentar un cero donde no hay datos.
+ */
+import type { SeasonRecords, SeasonStatistics, TournamentOverview } from '@liga/contracts';
+import { Crown, Flame, Shield, Swords, TrendingUp, Trophy } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+import OfficialBadge from '../components/statistics/OfficialBadge.astro';
+import SeasonRecordsPanel from '../components/statistics/SeasonRecords.astro';
+import { StatisticsTable } from '../components/statistics/StatisticsTable.tsx';
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { EmptyState, Panel, StatTile } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getSeasonRecords, getSeasonStatistics, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { percent } from '../lib/presentation.ts';
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+let statistics: SeasonStatistics | null = null;
+let overview: TournamentOverview | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [statistics, overview] = await Promise.all([getSeasonStatistics(), getTournament()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+/* Los records adornan; las estadisticas informan. Si fallan, la pagina sigue. */
+let records: SeasonRecords | null = null;
+try {
+  records = await getSeasonRecords();
+} catch {
+  records = null;
+}
+
+/** Cómo se lee cada métrica. El icono acompaña al texto, nunca lo sustituye. */
+const ICONS: Readonly<Record<string, LucideIcon>> = {
+  points: Trophy,
+  wins: Swords,
+  winRate: TrendingUp,
+  crownDiff: TrendingUp,
+  crownsFor: Crown,
+  averageCrownsFor: Crown,
+  crownsAgainst: Shield,
+  averageCrownsAgainst: Shield,
+  maxCrownWins: Crown,
+  bestWinStreak: Flame,
+};
+
+/** Los porcentajes se muestran como tales; el resto, tal cual. */
+function display(metric: string, value: number): string {
+  if (metric === 'winRate') return `${percent(value)}%`;
+  if (metric.startsWith('average')) return value.toFixed(1);
+  return String(value);
+}
+
+const GROUPS = [
+  { title: 'Ataque', metrics: ['crownsFor', 'averageCrownsFor', 'maxCrownWins'] },
+  { title: 'Defensa', metrics: ['crownsAgainst', 'averageCrownsAgainst'] },
+  { title: 'Constancia', metrics: ['points', 'wins', 'winRate', 'crownDiff', 'bestWinStreak'] },
+];
+
+const meta = pageMeta({
+  title: 'Estadísticas',
+  description:
+    'Rendimiento de los participantes de la Liga Estabanquitos 2026-1: puntos, victorias, coronas, rachas y actividad de la temporada.',
+  pathname: '/estadisticas',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Estadísticas"
+    description="Se derivan de los resultados y las sanciones. Ninguna se calcula en el navegador."
+    level={1}
+  >
+    <OfficialBadge slot="action" source="OFFICIAL" />
+  </SectionHeading>
+
+  {
+    failure !== null || statistics === null ? (
+      <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+    ) : (
+      <div class="space-y-10">
+        <section aria-labelledby="actividad">
+          <h2 id="actividad" class="mb-4 font-display text-lg font-semibold">
+            Actividad de la temporada
+          </h2>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <StatTile label="Partidos" value={statistics.activity.total} />
+            <StatTile label="Finalizados" value={statistics.activity.completed} tone="acid" />
+            <StatTile label="Por jugar" value={statistics.activity.scheduled} />
+            <StatTile
+              label="Aplazados"
+              value={statistics.activity.postponed}
+              tone={statistics.activity.postponed > 0 ? 'warning' : 'neutral'}
+              hint="No cuentan como jugados"
+            />
+            <StatTile
+              label="En disputa"
+              value={statistics.activity.disputed}
+              tone={statistics.activity.disputed > 0 ? 'danger' : 'neutral'}
+              hint="No son definitivos"
+            />
+            <StatTile
+              label="Aplazamientos"
+              value={statistics.activity.postponementEvents}
+              hint="Veces, no partidos"
+            />
+          </div>
+          <p class="mt-3 text-xs text-muted">
+            Un partido aplazado no cuenta como jugado y uno en disputa no cuenta como definitivo:
+            por eso tienen casilla propia y no se suman a los finalizados.
+          </p>
+        </section>
+
+        <section aria-labelledby="rendimiento">
+          <h2 id="rendimiento" class="mb-4 font-display text-lg font-semibold">
+            Rendimiento
+          </h2>
+          <StatisticsTable players={statistics.players} client:load />
+          <p class="mt-3 text-xs text-muted">
+            Toca una fila en el móvil para ver el resto de columnas. Un guion significa que todavía
+            no hay datos, no que el valor sea cero.
+          </p>
+        </section>
+
+        {GROUPS.map((group) => {
+          const boards = statistics.leaderboards.filter((board) =>
+            group.metrics.includes(board.metric),
+          );
+          if (boards.length === 0) return null;
+
+          return (
+            <section aria-labelledby={`grupo-${group.title}`}>
+              <h2 id={`grupo-${group.title}`} class="mb-4 font-display text-lg font-semibold">
+                {group.title}
+              </h2>
+              <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {boards.map((board) => {
+                  const Icon = ICONS[board.metric] ?? Trophy;
+                  return (
+                    <Panel as="article">
+                      <div class="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 class="font-display text-base font-semibold">{board.label}</h3>
+                          {board.lowerIsBetter ? (
+                            <p class="mt-0.5 text-xs text-faint">Cuanto menos, mejor</p>
+                          ) : null}
+                        </div>
+                        <Icon aria-hidden="true" className="size-5 shrink-0 text-cyan/70" />
+                      </div>
+
+                      {board.value === null || board.leaders.length === 0 ? (
+                        <p class="mt-5 text-sm text-muted">
+                          Todavía no hay datos suficientes para esta métrica.
+                        </p>
+                      ) : (
+                        <>
+                          <p class="mt-4 font-display text-3xl font-bold text-cyan">
+                            {display(board.metric, board.value)}
+                          </p>
+                          <ul class="mt-2 space-y-1">
+                            {board.leaders.map((leader) => (
+                              <li>
+                                <a
+                                  href={`/jugadores/${leader.slug}`}
+                                  class="text-sm font-medium text-ink transition-colors hover:text-cyan"
+                                >
+                                  {leader.displayName}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                          {board.leaders.length > 1 ? (
+                            <p class="mt-2 text-[11px] text-faint">
+                              Empatados en el primer puesto de esta métrica.
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    </Panel>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+
+        {statistics.players.length === 0 ? (
+          <EmptyState title="Sin participantes en la clasificación" />
+        ) : null}
+
+        {records === null ? null : <SeasonRecordsPanel records={records} />}
+
+        <Panel as="aside">
+          <h2 class="font-display text-base font-semibold">De dónde salen estos números</h2>
+          <p class="mt-2 text-sm text-muted">
+            De los partidos finalizados y las sanciones vigentes, exactamente igual que la
+            clasificación. Si esta página y la tabla dijeran cosas distintas, una de las dos estaría
+            mal.
+          </p>
+          <p class="mt-2 text-sm text-muted">
+            Lo que Clash Royale devuelve —mazos, cartas, batallas— es otra cosa: evidencia parcial,
+            que vive en{' '}
+            <a href="/cartas" class="text-cyan underline-offset-2 hover:underline">
+              /cartas
+            </a>{' '}
+            y en la ficha de cada partido, siempre marcada como observada y con el número de
+            batallas sobre el que se calculó.
+          </p>
+        </Panel>
+      </div>
+    )
+  }
+</Public>

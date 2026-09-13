@@ -1,0 +1,154 @@
+---
+/**
+ * Sobre la liga.
+ *
+ * Qué es esto, cómo funciona por dentro y qué compromisos tiene con los datos.
+ * No es una página de relleno: explica por qué la tabla dice lo que dice.
+ */
+import type { Rules, TournamentOverview } from '@liga/contracts';
+import { Database, Eye, GitBranch, ShieldCheck } from 'lucide-react';
+
+import { LeagueStatusBadge } from '../components/league/LeagueStatus.tsx';
+import ApiFailure from '../components/ui/ApiFailure.astro';
+import { Panel } from '../components/ui/primitives.tsx';
+import SectionHeading from '../components/ui/SectionHeading.astro';
+import { getRules, getTournament } from '../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../lib/api/messages.ts';
+import { pageMeta } from '../lib/seo.ts';
+import Public from '../layouts/Public.astro';
+
+let overview: TournamentOverview | null = null;
+let rules: Rules | null = null;
+let failure: FriendlyError | null = null;
+
+try {
+  [overview, rules] = await Promise.all([getTournament(), getRules()]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const PRINCIPLES = [
+  {
+    icon: Database,
+    title: 'La clasificación no se guarda',
+    text: 'No existe una tabla editable en ningún sitio. Se calcula cada vez a partir de los partidos finalizados y de las sanciones activas. Nadie puede subir a alguien un puesto sin que haya un resultado detrás.',
+  },
+  {
+    icon: Eye,
+    title: 'Nada se sobrescribe en silencio',
+    text: 'Corregir un resultado deja revisión. Aplazar un partido deja historial con las dos fechas. Anular una sanción deja constancia. Generar el calendario guarda su semilla, así que se puede reproducir.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Lo que no está decidido, no se inventa',
+    text: 'Cuando el reglamento todavía no define algo —la puntuación de una incomparecencia, por ejemplo— el sistema se niega a improvisar y lo dice. Es preferible un hueco declarado a un número que nadie acordó.',
+  },
+  {
+    icon: GitBranch,
+    title: 'Una sola fuente de verdad',
+    text: 'Las reglas viven en el motor de competición. La interfaz no calcula puntos, ni posiciones, ni ganadores: los muestra. Si esta web y el reglamento discrepasen, la web está mal.',
+  },
+];
+
+const meta = pageMeta({
+  title: 'Sobre la liga',
+  description:
+    'Qué es la Liga Estabanquitos 2026-1, cómo se calcula la clasificación y qué compromisos tiene con los datos.',
+  pathname: '/sobre-la-liga',
+});
+---
+
+<Public meta={meta} rulesVersion={overview?.rulesVersion ?? null}>
+  <SectionHeading
+    title="Sobre la liga"
+    description="Una competición de Clash Royale de diez participantes, y una plataforma que puede explicar cada número que enseña."
+    level={1}
+  />
+
+  <div class="space-y-10">
+    {
+      failure !== null || overview === null ? (
+        <ApiFailure failure={failure ?? friendlyError(new Error('sin datos'))} />
+      ) : (
+        <Panel>
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 class="font-display text-xl font-semibold">{overview.name}</h2>
+              <p class="mt-1 text-sm text-muted">Temporada {overview.season}</p>
+            </div>
+            <LeagueStatusBadge status={overview.status} />
+          </div>
+          <dl class="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+            <div>
+              <dt class="text-xs text-faint">Sistema</dt>
+              <dd class="mt-0.5">Todos contra todos</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Vueltas</dt>
+              <dd class="mt-0.5 font-mono">{overview.format.legs}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Partidos por jugador</dt>
+              <dd class="mt-0.5 font-mono">{overview.format.matchesPerPlayer}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-faint">Reglamento</dt>
+              <dd class="mt-0.5 font-mono">{overview.rulesVersion}</dd>
+            </div>
+          </dl>
+        </Panel>
+      )
+    }
+
+    <section aria-labelledby="principios">
+      <h2 id="principios" class="mb-4 font-display text-2xl font-bold">Cómo funciona por dentro</h2>
+      <div class="grid gap-4 md:grid-cols-2">
+        {
+          PRINCIPLES.map((principle) => (
+            <article class="panel p-5">
+              <principle.icon aria-hidden="true" className="size-5 text-cyan" />
+              <h3 class="mt-3 font-display text-base font-semibold">{principle.title}</h3>
+              <p class="mt-2 text-sm text-muted">{principle.text}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="pendientes-aviso">
+      <h2 id="pendientes-aviso" class="mb-3 font-display text-2xl font-bold">
+        Lo que todavía falta decidir
+      </h2>
+      <p class="max-w-2xl text-sm text-muted">
+        El reglamento no está cerrado del todo. Hay once decisiones abiertas, y mientras lo estén el
+        sistema no las suple con un valor por defecto: se planta y lo dice.
+        {
+          rules === null || !rules.pending.walkovers
+            ? ''
+            : ' La más urgente es la puntuación de una incomparecencia: hoy el motor se niega a registrar un walkover.'
+        }
+      </p>
+      <p class="mt-4">
+        <a
+          href="/reglamento#reglas-pendientes"
+          class="inline-flex min-h-11 items-center rounded-lg border border-warning/50 bg-warning/10 px-4 text-sm font-semibold text-warning transition-colors hover:bg-warning/20"
+        >
+          Ver las reglas pendientes
+        </a>
+      </p>
+    </section>
+
+    <section aria-labelledby="clash-aviso">
+      <h2 id="clash-aviso" class="mb-3 font-display text-2xl font-bold">Clash Royale</h2>
+      <p class="max-w-2xl text-sm text-muted">
+        La integración con la API oficial de Supercell llega más adelante. Cuando llegue, será el
+        backend quien hable con ella: el navegador nunca tendrá la clave, y ninguna propuesta
+        automática de resultado se dará por buena sin que un administrador la confirme.
+      </p>
+      <p class="mt-4 max-w-2xl text-xs text-faint">
+        Este proyecto no está afiliado a Supercell. El material de Clash Royale se usa conforme a su
+        Fan Content Policy.
+      </p>
+    </section>
+  </div>
+</Public>

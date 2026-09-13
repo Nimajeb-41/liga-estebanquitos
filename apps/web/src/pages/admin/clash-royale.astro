@@ -1,0 +1,100 @@
+---
+/**
+ * Clash Royale (administración).
+ *
+ * Dos cosas en una pantalla: qué cuentas están vinculadas y qué batallas
+ * esperan una decisión. Nada de lo que hay aquí registra un resultado por su
+ * cuenta.
+ */
+import type { BattleCandidate, ClashLink } from '@liga/contracts';
+
+import { CandidateReview } from '../../components/admin/CandidateReview.tsx';
+import { ClashLinks } from '../../components/admin/ClashLinks.tsx';
+import { ActionButton } from '../../components/admin/actions.tsx';
+import ApiFailure from '../../components/ui/ApiFailure.astro';
+import { StatTile } from '../../components/ui/primitives.tsx';
+import { getCandidates, getClashLinks } from '../../lib/api/endpoints.ts';
+import { friendlyError, type FriendlyError } from '../../lib/api/messages.ts';
+import { currentSession, sessionHeader } from '../../lib/api/session.ts';
+import Admin from '../../layouts/Admin.astro';
+
+const session = await currentSession(Astro.cookies).catch(() => null);
+if (session === null) return Astro.redirect('/admin/login?next=/admin/clash-royale');
+
+const cookie = sessionHeader(Astro.cookies);
+
+let links: ClashLink[] = [];
+let candidates: BattleCandidate[] = [];
+let failure: FriendlyError | null = null;
+
+try {
+  [links, candidates] = await Promise.all([getClashLinks({ cookie }), getCandidates({ cookie })]);
+} catch (error) {
+  failure = friendlyError(error);
+}
+
+const count = (status: string) => candidates.filter((entry) => entry.status === status).length;
+---
+
+<Admin
+  title="Clash Royale"
+  description="Evidencia externa. La liga sigue siendo la fuente de verdad del torneo."
+  session={session}
+>
+  {
+    failure !== null ? (
+      <ApiFailure failure={failure} />
+    ) : (
+      <div class="space-y-8">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile
+            label="Cuentas vinculadas"
+            value={`${links.filter((link) => link.clashTag !== null).length}/${links.length}`}
+            hint="Ninguna verificada"
+          />
+          <StatTile
+            label="Por revisar"
+            value={count('PENDING')}
+            tone={count('PENDING') > 0 ? 'cyan' : 'neutral'}
+          />
+          <StatTile
+            label="Apartados"
+            value={count('NEEDS_REVIEW')}
+            tone={count('NEEDS_REVIEW') > 0 ? 'warning' : 'neutral'}
+          />
+          <StatTile label="Confirmados" value={count('CONFIRMED')} tone="acid" />
+        </div>
+
+        <section aria-labelledby="candidatos">
+          <h2 id="candidatos" class="mb-4 font-display text-lg font-semibold">
+            Candidatos
+          </h2>
+          <CandidateReview candidates={candidates} client:load />
+        </section>
+
+        <section aria-labelledby="cuentas">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 id="cuentas" class="font-display text-lg font-semibold">
+              Cuentas
+            </h2>
+            <ActionButton path="clash-royale/cards/sync" variant="secondary" client:load>
+              Sincronizar catálogo de cartas
+            </ActionButton>
+          </div>
+          <ClashLinks links={links} client:load />
+        </section>
+
+        <section class="panel p-5">
+          <h2 class="font-display text-base font-semibold">Sobre la sincronización</h2>
+          <p class="mt-2 text-sm text-muted">
+            Se lanza a mano, y a propósito. La frecuencia adecuada depende de cuánto conserva Clash
+            Royale el historial, y de eso solo se conoce la cota inferior medida en el spike:
+            <strong> al menos 41,4 horas</strong>. Es más que el plazo de impugnación de 24 h
+            (R-06), pero hasta repetir la medición conviene sincronizar poco después de cada jornada
+            en lugar de confiar en que la ventana sea holgada.
+          </p>
+        </section>
+      </div>
+    )
+  }
+</Admin>
