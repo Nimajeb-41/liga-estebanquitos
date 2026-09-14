@@ -6,10 +6,34 @@ Lo que hay que hacer para que la liga eche a andar, en orden.
 
 ## Arrancar
 
+Un solo comando, en **una ventana que se queda abierta**:
+
 ```bash
-npm install
-npm run liga        # API en 127.0.0.1:3000
-npm run dev --workspace=@liga/web   # sitio en 127.0.0.1:4321
+npm run online
+```
+
+Levanta las tres piezas en orden y espera a que cada una responda antes de
+seguir: la API, el sitio y el túnel público. El orden importa —abrir el túnel
+antes de que el sitio conteste publica una web rota, que desde fuera no se
+distingue de un servidor mal hecho—.
+
+**Mientras esa ventana siga abierta, la liga está en línea.** Al cerrarla, o con
+Ctrl+C, se paran las tres juntas. Es deliberado: dejar procesos sueltos acaba en
+dos servidores peleándose por la misma carpeta de base de datos, que PGlite abre
+en exclusiva.
+
+Si prefieres verlas por separado, cada una en su terminal:
+
+```bash
+npm run liga     # API y base de datos
+npm run web      # el sitio ya construido
+npm run tunel    # la URL pública
+```
+
+Y para desarrollar, con recarga en caliente:
+
+```bash
+npm run dev --workspace=@liga/web
 ```
 
 La base de datos vive en `datos/liga`, una carpeta del proyecto. No hace falta
@@ -147,11 +171,9 @@ respuesta y `/health` solo dice si está configurado.
 
 ---
 
-## Antes de publicar el repositorio
+## Antes de subir cambios
 
-El proyecto todavía no es un repositorio Git. Cuando se cree:
-
-1. Comprobar que `.gitignore` cubre `.env`, `.env.backup-*` y `/datos/`.
+1. Comprobar que `.gitignore` cubre `.env`, `.env.backup-*`, `/datos/` y `/.tmp/`.
 2. Ejecutar `npm run audit:secrets`. Va el primero dentro de `npm run verify` y
    existe porque el error ya ocurrió una vez: en la Fase 3 un token real acabó
    en `.env.example`. **Ese token debe darse por comprometido y no
