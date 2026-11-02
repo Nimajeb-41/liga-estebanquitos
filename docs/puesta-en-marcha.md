@@ -4,6 +4,91 @@ Lo que hay que hacer para que la liga eche a andar, en orden.
 
 ---
 
+## Desde cero en Windows
+
+Para una PC nueva, o después de perder la carpeta de datos. En PowerShell.
+
+1. Instalar Node, Git y ngrok, y **cerrar y volver a abrir la terminal**:
+
+   ```bash
+   winget install OpenJS.NodeJS.LTS
+   ```
+
+   ```bash
+   winget install Git.Git
+   ```
+
+   ```bash
+   winget install Ngrok.Ngrok
+   ```
+
+2. Conectar ngrok a la cuenta. El token está en dashboard.ngrok.com, y en
+   **Domains** está el dominio fijo gratuito (algo como
+   `nombre.ngrok-free.app` o `.dev`):
+
+   ```bash
+   ngrok config add-authtoken TU_TOKEN
+   ```
+
+3. Bajar el proyecto e instalar dependencias:
+
+   ```bash
+   git clone https://github.com/Nimajeb-41/liga-estebanquitos.git
+   ```
+
+   ```bash
+   cd liga-estebanquitos
+   ```
+
+   ```bash
+   npm ci
+   ```
+
+4. Crear la configuración y editarla con `notepad .env`:
+
+   ```bash
+   copy .env.example .env
+   ```
+
+   | Variable               | Valor                                                        |
+   | ---------------------- | ------------------------------------------------------------ |
+   | `DATABASE_URL`         | `file:./datos/liga`                                          |
+   | `ADMIN_EMAIL`          | El correo con el que se entra al panel                       |
+   | `ADMIN_PASSWORD`       | Al menos 12 caracteres                                       |
+   | `CLASH_ROYALE_ENABLED` | `false`, salvo que haya un token nuevo                       |
+   | `TUNNEL_DOMAIN`        | El dominio de ngrok, sin `https://`                          |
+   | `PUBLIC_SITE_URL`      | `https://` + el dominio. **Si no coincide, el panel da 403** |
+
+5. Cargar la temporada desde `temporada/2026-1.json` (ver
+   [recuperacion-2026-1.md](recuperacion-2026-1.md)). Crea la base, el
+   administrador, la plantilla, el calendario y los resultados, y comprueba la
+   clasificación:
+
+   ```bash
+   npm run restaurar
+   ```
+
+6. Construir el sitio. Hay que repetirlo cada vez que cambie `PUBLIC_SITE_URL`:
+
+   ```bash
+   npm run build --workspace=@liga/web
+   ```
+
+7. Ponerla en línea (ver «Arrancar», abajo):
+
+   ```bash
+   npm run online
+   ```
+
+Y antes de cada jornada, **una copia de la carpeta de datos con el servidor
+parado**. Es lo que faltó la vez que se perdió la temporada:
+
+```bash
+Copy-Item -Recurse datos\liga datos\copia-2026-11-08
+```
+
+---
+
 ## Arrancar
 
 Un solo comando, en **una ventana que se queda abierta**:

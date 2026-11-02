@@ -1,0 +1,872 @@
+{
+  "formato": 1,
+  "temporada": "2026-1",
+  "aviso": "Reconstrucción. El registro de las jornadas 1 a 7 se perdió en noviembre de 2026. Lo que se conserva es real: la clasificación tras la J7, quién ganó a tres coronas, los walkovers de Renuz y los cruces de J8 y J9. El orden del calendario, los marcadores de J1-J7 y sus fechas salen de un sorteo con semilla que reproduce exactamente esa clasificación. Se puede regenerar con «npm run reconstruccion:sortear».",
+  "zonaHoraria": "UTC-03:00",
+  "jugadores": [
+    {
+      "nombre": "Nimaben",
+      "plaza": 1
+    },
+    {
+      "nombre": "Lyuk",
+      "plaza": 2
+    },
+    {
+      "nombre": "Dullys",
+      "plaza": 3
+    },
+    {
+      "nombre": "Esteban",
+      "plaza": 4
+    },
+    {
+      "nombre": "Eze23ml",
+      "plaza": 5
+    },
+    {
+      "nombre": "LeonSB",
+      "plaza": 6
+    },
+    {
+      "nombre": "Eli_as",
+      "plaza": 7
+    },
+    {
+      "nombre": "Lucía",
+      "plaza": 8
+    },
+    {
+      "nombre": "Herobrain",
+      "plaza": 9
+    },
+    {
+      "nombre": "Renuz",
+      "plaza": 10
+    }
+  ],
+  "sorteo": {
+    "semilla": "liga-estabanquitos-2026-1/reconstruccion/227373",
+    "intento": 227373,
+    "criterios": [
+      "Las jornadas 8 y 9 tienen exactamente los cruces propuestos, en ese orden. Eso obliga a que J1-J7 contengan los otros 35, que es lo que dice la tabla: cada jugador ya enfrentó a 7 rivales.",
+      "Coincide en local y visitante con la propuesta en 9 de los 10 partidos de J8 y J9, el máximo posible: ningún calendario del método del círculo coincide en los 10.",
+      "Los tres partidos pendientes de Renuz caen en tres jornadas seguidas: una ausencia de tres semanas es más creíble que tres sueltas."
+    ]
+  },
+  "intervaloMinutos": 15,
+  "notaResultados": "Resultado reconstruido por sorteo: el registro original de J1-J7 se perdió. La clasificación tras la J7 es la real.",
+  "jornadas": [
+    {
+      "jornada": 1,
+      "vuelta": 1,
+      "inicio": "2026-09-20T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Esteban",
+          "resultado": {
+            "local": 1,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Lyuk",
+          "visitante": "Dullys",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Nimaben",
+          "visitante": "Herobrain",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 4,
+          "local": "LeonSB",
+          "visitante": "Lucía",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 5,
+          "local": "Eli_as",
+          "visitante": "Eze23ml",
+          "resultado": {
+            "local": 1,
+            "visitante": 2
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 2,
+      "vuelta": 1,
+      "inicio": "2026-09-27T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Dullys",
+          "visitante": "Renuz",
+          "resultado": {
+            "local": 2,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Esteban",
+          "visitante": "Herobrain",
+          "resultado": {
+            "local": 2,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Lyuk",
+          "visitante": "Lucía",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 4,
+          "local": "Nimaben",
+          "visitante": "Eze23ml",
+          "resultado": {
+            "local": 1,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 5,
+          "local": "LeonSB",
+          "visitante": "Eli_as",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 3,
+      "vuelta": 1,
+      "inicio": "2026-10-04T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Herobrain",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Renuz no se presentó al partido pendiente.",
+            "reprogramadoPara": "2026-11-01T21:15:00-03:00"
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Dullys",
+          "visitante": "Lucía",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Esteban",
+          "visitante": "Eze23ml",
+          "resultado": {
+            "local": 0,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 4,
+          "local": "Lyuk",
+          "visitante": "Eli_as",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 5,
+          "local": "Nimaben",
+          "visitante": "LeonSB",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 4,
+      "vuelta": 1,
+      "inicio": "2026-10-11T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Lucía",
+          "visitante": "Renuz",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Renuz no se presentó al partido pendiente.",
+            "reprogramadoPara": "2026-11-01T21:30:00-03:00"
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Herobrain",
+          "visitante": "Eze23ml",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Dullys",
+          "visitante": "Eli_as",
+          "resultado": {
+            "local": 0,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 4,
+          "local": "Esteban",
+          "visitante": "LeonSB",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 5,
+          "local": "Lyuk",
+          "visitante": "Nimaben",
+          "resultado": {
+            "local": 0,
+            "visitante": 3
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 5,
+      "vuelta": 1,
+      "inicio": "2026-10-18T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Eze23ml",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Renuz no se presentó al partido pendiente.",
+            "reprogramadoPara": "2026-11-01T21:45:00-03:00"
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Lucía",
+          "visitante": "Eli_as",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Herobrain",
+          "visitante": "LeonSB",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 4,
+          "local": "Dullys",
+          "visitante": "Nimaben",
+          "resultado": {
+            "local": 0,
+            "visitante": 3
+          }
+        },
+        {
+          "orden": 5,
+          "local": "Esteban",
+          "visitante": "Lyuk",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 6,
+      "vuelta": 1,
+      "inicio": "2026-10-25T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Eli_as",
+          "visitante": "Renuz",
+          "resultado": {
+            "local": 3,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Eze23ml",
+          "visitante": "LeonSB",
+          "walkover": {
+            "ausente": "Eze23ml",
+            "motivo": "Incomparecencia de Eze23ml según recuerda la administración (registro original perdido)."
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Lucía",
+          "visitante": "Nimaben",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          }
+        },
+        {
+          "orden": 4,
+          "local": "Herobrain",
+          "visitante": "Lyuk",
+          "resultado": {
+            "local": 0,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 5,
+          "local": "Dullys",
+          "visitante": "Esteban",
+          "resultado": {
+            "local": 1,
+            "visitante": 2
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 7,
+      "vuelta": 1,
+      "inicio": "2026-11-01T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "LeonSB",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Incomparecencia de Renuz según recuerda la administración (registro original perdido)."
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Eli_as",
+          "visitante": "Nimaben",
+          "resultado": {
+            "local": 3,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 3,
+          "local": "Eze23ml",
+          "visitante": "Lyuk",
+          "resultado": {
+            "local": 0,
+            "visitante": 2
+          }
+        },
+        {
+          "orden": 4,
+          "local": "Lucía",
+          "visitante": "Esteban",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          }
+        },
+        {
+          "orden": 5,
+          "local": "Herobrain",
+          "visitante": "Dullys",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
+          }
+        }
+      ]
+    },
+    {
+      "jornada": 8,
+      "vuelta": 1,
+      "inicio": "2026-11-08T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Nimaben",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 2,
+          "local": "LeonSB",
+          "visitante": "Lyuk"
+        },
+        {
+          "orden": 3,
+          "local": "Eli_as",
+          "visitante": "Esteban"
+        },
+        {
+          "orden": 4,
+          "local": "Eze23ml",
+          "visitante": "Dullys"
+        },
+        {
+          "orden": 5,
+          "local": "Lucía",
+          "visitante": "Herobrain"
+        }
+      ]
+    },
+    {
+      "jornada": 9,
+      "vuelta": 1,
+      "inicio": "2026-11-15T20:00:00-03:00",
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Lyuk"
+        },
+        {
+          "orden": 2,
+          "local": "Nimaben",
+          "visitante": "Esteban"
+        },
+        {
+          "orden": 3,
+          "local": "LeonSB",
+          "visitante": "Dullys"
+        },
+        {
+          "orden": 4,
+          "local": "Eli_as",
+          "visitante": "Herobrain"
+        },
+        {
+          "orden": 5,
+          "local": "Eze23ml",
+          "visitante": "Lucía"
+        }
+      ]
+    },
+    {
+      "jornada": 10,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Esteban",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 2,
+          "local": "Dullys",
+          "visitante": "Lyuk"
+        },
+        {
+          "orden": 3,
+          "local": "Herobrain",
+          "visitante": "Nimaben"
+        },
+        {
+          "orden": 4,
+          "local": "Lucía",
+          "visitante": "LeonSB"
+        },
+        {
+          "orden": 5,
+          "local": "Eze23ml",
+          "visitante": "Eli_as"
+        }
+      ]
+    },
+    {
+      "jornada": 11,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Dullys"
+        },
+        {
+          "orden": 2,
+          "local": "Herobrain",
+          "visitante": "Esteban"
+        },
+        {
+          "orden": 3,
+          "local": "Lucía",
+          "visitante": "Lyuk"
+        },
+        {
+          "orden": 4,
+          "local": "Eze23ml",
+          "visitante": "Nimaben"
+        },
+        {
+          "orden": 5,
+          "local": "Eli_as",
+          "visitante": "LeonSB"
+        }
+      ]
+    },
+    {
+      "jornada": 12,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Herobrain",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 2,
+          "local": "Lucía",
+          "visitante": "Dullys"
+        },
+        {
+          "orden": 3,
+          "local": "Eze23ml",
+          "visitante": "Esteban"
+        },
+        {
+          "orden": 4,
+          "local": "Eli_as",
+          "visitante": "Lyuk"
+        },
+        {
+          "orden": 5,
+          "local": "LeonSB",
+          "visitante": "Nimaben"
+        }
+      ]
+    },
+    {
+      "jornada": 13,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Lucía"
+        },
+        {
+          "orden": 2,
+          "local": "Eze23ml",
+          "visitante": "Herobrain"
+        },
+        {
+          "orden": 3,
+          "local": "Eli_as",
+          "visitante": "Dullys"
+        },
+        {
+          "orden": 4,
+          "local": "LeonSB",
+          "visitante": "Esteban"
+        },
+        {
+          "orden": 5,
+          "local": "Nimaben",
+          "visitante": "Lyuk"
+        }
+      ]
+    },
+    {
+      "jornada": 14,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Eze23ml",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 2,
+          "local": "Eli_as",
+          "visitante": "Lucía"
+        },
+        {
+          "orden": 3,
+          "local": "LeonSB",
+          "visitante": "Herobrain"
+        },
+        {
+          "orden": 4,
+          "local": "Nimaben",
+          "visitante": "Dullys"
+        },
+        {
+          "orden": 5,
+          "local": "Lyuk",
+          "visitante": "Esteban"
+        }
+      ]
+    },
+    {
+      "jornada": 15,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Eli_as"
+        },
+        {
+          "orden": 2,
+          "local": "LeonSB",
+          "visitante": "Eze23ml"
+        },
+        {
+          "orden": 3,
+          "local": "Nimaben",
+          "visitante": "Lucía"
+        },
+        {
+          "orden": 4,
+          "local": "Lyuk",
+          "visitante": "Herobrain"
+        },
+        {
+          "orden": 5,
+          "local": "Esteban",
+          "visitante": "Dullys"
+        }
+      ]
+    },
+    {
+      "jornada": 16,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "LeonSB",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 2,
+          "local": "Nimaben",
+          "visitante": "Eli_as"
+        },
+        {
+          "orden": 3,
+          "local": "Lyuk",
+          "visitante": "Eze23ml"
+        },
+        {
+          "orden": 4,
+          "local": "Esteban",
+          "visitante": "Lucía"
+        },
+        {
+          "orden": 5,
+          "local": "Dullys",
+          "visitante": "Herobrain"
+        }
+      ]
+    },
+    {
+      "jornada": 17,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Renuz",
+          "visitante": "Nimaben"
+        },
+        {
+          "orden": 2,
+          "local": "Lyuk",
+          "visitante": "LeonSB"
+        },
+        {
+          "orden": 3,
+          "local": "Esteban",
+          "visitante": "Eli_as"
+        },
+        {
+          "orden": 4,
+          "local": "Dullys",
+          "visitante": "Eze23ml"
+        },
+        {
+          "orden": 5,
+          "local": "Herobrain",
+          "visitante": "Lucía"
+        }
+      ]
+    },
+    {
+      "jornada": 18,
+      "vuelta": 2,
+      "inicio": null,
+      "partidos": [
+        {
+          "orden": 1,
+          "local": "Lyuk",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 2,
+          "local": "Esteban",
+          "visitante": "Nimaben"
+        },
+        {
+          "orden": 3,
+          "local": "Dullys",
+          "visitante": "LeonSB"
+        },
+        {
+          "orden": 4,
+          "local": "Herobrain",
+          "visitante": "Eli_as"
+        },
+        {
+          "orden": 5,
+          "local": "Lucía",
+          "visitante": "Eze23ml"
+        }
+      ]
+    }
+  ],
+  "clasificacionEsperada": [
+    {
+      "posicion": 1,
+      "jugador": "Esteban",
+      "pj": 7,
+      "vg": 6,
+      "vp": 1,
+      "dc": 5,
+      "pts": 18
+    },
+    {
+      "posicion": 2,
+      "jugador": "LeonSB",
+      "pj": 7,
+      "vg": 6,
+      "vp": 1,
+      "dc": 3,
+      "pts": 18
+    },
+    {
+      "posicion": 3,
+      "jugador": "Lyuk",
+      "pj": 7,
+      "vg": 5,
+      "vp": 2,
+      "dc": 3,
+      "pts": 15
+    },
+    {
+      "posicion": 4,
+      "jugador": "Eze23ml",
+      "pj": 7,
+      "vg": 4,
+      "vp": 3,
+      "dc": 1,
+      "pts": 12
+    },
+    {
+      "posicion": 5,
+      "jugador": "Lucía",
+      "pj": 7,
+      "vg": 4,
+      "vp": 3,
+      "dc": 0,
+      "pts": 12
+    },
+    {
+      "posicion": 6,
+      "jugador": "Nimaben",
+      "pj": 7,
+      "vg": 3,
+      "vp": 4,
+      "dc": 3,
+      "pts": 11
+    },
+    {
+      "posicion": 7,
+      "jugador": "Eli_as",
+      "pj": 7,
+      "vg": 3,
+      "vp": 4,
+      "dc": 1,
+      "pts": 11
+    },
+    {
+      "posicion": 8,
+      "jugador": "Herobrain",
+      "pj": 7,
+      "vg": 3,
+      "vp": 4,
+      "dc": -4,
+      "pts": 9
+    },
+    {
+      "posicion": 9,
+      "jugador": "Dullys",
+      "pj": 7,
+      "vg": 1,
+      "vp": 6,
+      "dc": -7,
+      "pts": 3
+    },
+    {
+      "posicion": 10,
+      "jugador": "Renuz",
+      "pj": 7,
+      "vg": 0,
+      "vp": 7,
+      "dc": -5,
+      "pts": 0
+    }
+  ]
+}

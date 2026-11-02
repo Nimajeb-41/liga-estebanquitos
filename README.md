@@ -28,22 +28,22 @@ formato, typecheck y build limpios.
 
 ## El formato en una tabla
 
-| Concepto               | Valor                                                                      |
-| ---------------------- | -------------------------------------------------------------------------- |
-| Participantes          | 10 (hoy hay **6 confirmados**, 4 plazas TBD)                               |
-| Sistema                | Todos contra todos, ida y vuelta                                           |
-| Jornadas               | 18 (9 de ida + 9 de vuelta)                                                |
-| Partidos por jornada   | 5                                                                          |
-| Partidos totales       | 90                                                                         |
-| Victoria normal        | 3 puntos                                                                   |
-| Victoria con 3 coronas | 4 puntos (3-0, 3-1 y 3-2)                                                  |
-| Derrota                | 0 puntos                                                                   |
-| Empate                 | No existe: un 2-2 se rechaza                                               |
-| Incomparecencia        | 3 puntos para quien se presentó, sin coronas para nadie                    |
-| Sanción por BM         | −2 puntos                                                                  |
-| Aplazamiento           | No puntúa, no suma coronas, no cuenta como jugado                          |
-| Disputa                | 24 horas para impugnar                                                     |
-| Desempates             | Puntos → DC → Victorias → Enfrentamiento directo → Victorias por 3 coronas |
+| Concepto               | Valor                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| Participantes          | 10: Nimaben, Lyuk, Dullys, Esteban, Eze23ml, LeonSB, Eli_as, Lucía, Herobrain y Renuz |
+| Sistema                | Todos contra todos, ida y vuelta                                                      |
+| Jornadas               | 18 (9 de ida + 9 de vuelta)                                                           |
+| Partidos por jornada   | 5                                                                                     |
+| Partidos totales       | 90                                                                                    |
+| Victoria normal        | 3 puntos                                                                              |
+| Victoria con 3 coronas | 4 puntos (3-0, 3-1 y 3-2)                                                             |
+| Derrota                | 0 puntos                                                                              |
+| Empate                 | No existe: un 2-2 se rechaza                                                          |
+| Incomparecencia        | 3 puntos para quien se presentó, sin coronas para nadie                               |
+| Sanción por BM         | −2 puntos                                                                             |
+| Aplazamiento           | No puntúa, no suma coronas, no cuenta como jugado                                     |
+| Disputa                | 24 horas para impugnar                                                                |
+| Desempates             | Puntos → DC → Victorias → Enfrentamiento directo → Victorias por 3 coronas            |
 
 La incomparecencia quedó decidida el 10 de septiembre de 2026 (regla P-01): tres
 puntos y ninguna corona, nunca un 3-0 inventado. Ver
@@ -152,7 +152,8 @@ liga-estabanquitos/
 - [Operar una temporada](docs/operacion.md) — jornadas, centro de acción y eventos internos.
 - [Transmisión](docs/transmision.md) — el narrador, el directo, GSAP, sonido y PWA.
 - [Fase 6](docs/FASE-6-CLOSURE.md) — informe de cierre: lo que hizo falta para operar de verdad.
-- [Puesta en marcha](docs/puesta-en-marcha.md) — arrancar la liga, paso a paso.
+- [Puesta en marcha](docs/puesta-en-marcha.md) — arrancar la liga, paso a paso (también desde cero en Windows).
+- [Recuperación de la temporada 2026-1](docs/recuperacion-2026-1.md) — qué se perdió, qué es real, qué se sorteó y cómo se carga (`npm run restaurar`).
 - [Integración con Clash Royale](docs/clash-royale-integration.md) — el flujo completo, de la API al resultado oficial.
 - [Spike de Clash Royale](docs/clash-royale-spike.md) — la evidencia con la que se construyó.
 - [Roadmap](docs/roadmap.md) — qué entra en cada fase.

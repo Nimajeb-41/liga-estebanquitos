@@ -24,7 +24,7 @@
     "api:dev": "npm run dev --workspace=@liga/api",
     "verify": "npm run audit:secrets && npm run audit:indexes && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
     "db:migrate": "npm run db:migrate --workspace=@liga/database",
-    "db:seed": "node apps/api/src/scripts/seed.ts",
+    "db:seed": "node --env-file-if-exists=.env apps/api/src/scripts/seed.ts",
     "db:reset": "docker compose down -v && docker compose up -d postgres",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -43,7 +43,9 @@
     "diagnostico": "node scripts/diagnostico.mjs",
     "web": "node --env-file=.env apps/web/dist/server/entry.mjs",
     "tunel": "node scripts/tunel.mjs",
-    "online": "node scripts/online.mjs"
+    "online": "node scripts/online.mjs",
+    "restaurar": "node --env-file-if-exists=.env apps/api/src/scripts/restaurar.ts",
+    "reconstruccion:sortear": "node apps/api/src/scripts/reconstruccion.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
