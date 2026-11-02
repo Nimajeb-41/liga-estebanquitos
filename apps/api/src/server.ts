@@ -36,6 +36,11 @@ export interface BuildServerOptions {
    * construye con el token de la configuracion.
    */
   readonly clashRoyaleClient?: ClashRoyaleClient;
+  /**
+   * Sin registro de peticiones. Para los scripts que usan la API por dentro
+   * (`restaurar`), donde una línea JSON por llamada taparía lo que importa.
+   */
+  readonly silent?: boolean;
 }
 
 export async function buildServer(options: BuildServerOptions): Promise<FastifyInstance> {
@@ -80,7 +85,7 @@ export async function buildServer(options: BuildServerOptions): Promise<FastifyI
 
   const app = Fastify({
     logger:
-      config.nodeEnv === 'test'
+      config.nodeEnv === 'test' || options.silent === true
         ? false
         : {
             level: config.nodeEnv === 'production' ? 'info' : 'debug',

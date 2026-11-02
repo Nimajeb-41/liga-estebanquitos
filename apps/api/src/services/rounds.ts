@@ -57,7 +57,7 @@ export async function scheduleRound(
   const round = await ctx.db.query.rounds.findFirst({
     where: (rounds, { and, eq: equals }) =>
       and(equals(rounds.tournamentId, tournament.id), equals(rounds.number, roundNumber)),
-    columns: { id: true, number: true },
+    columns: { id: true, number: true, scheduledAt: true },
   });
   if (round === undefined) {
     throw notFound(`No existe la jornada ${roundNumber}.`, { roundNumber });
@@ -104,6 +104,18 @@ export async function scheduleRound(
       })
       .where(eq(schema.matches.id, match.id));
     assigned.push({ id: match.id, scheduledAt: date.toISOString() });
+  }
+
+  /*
+    La fecha prevista de la jornada es la de su primer partido. Sin esto la
+    ficha de la jornada decía «Sin fecha» con todos sus partidos ya fechados.
+    Misma regla que con los partidos: una fecha puesta no se pisa sin pedirlo.
+  */
+  if (round.scheduledAt === null || request.overwrite) {
+    await ctx.db
+      .update(schema.rounds)
+      .set({ scheduledAt: start })
+      .where(eq(schema.rounds.id, round.id));
   }
 
   await writeAudit(ctx.db, {
