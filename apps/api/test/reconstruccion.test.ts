@@ -19,8 +19,8 @@ import {
   construirTemporada,
   cumpleCriterios,
   JUGADORES,
-  PROPUESTA_J8,
-  PROPUESTA_J9,
+  NOTA_RECORDADO,
+  RESULTADOS_RECORDADOS,
 } from '../src/scripts/reconstruccion.ts';
 import { leerTemporada, restaurarTemporada } from '../src/scripts/restaurar.ts';
 import { CONFIRMED_PLAYERS } from '../src/scripts/seed.ts';
@@ -48,20 +48,58 @@ describe('el sorteo de la reconstrucción', () => {
     expect(reconstruida).toEqual(temporada);
   });
 
-  it('las jornadas 8 y 9 son los cruces propuestos y no tienen resultado', () => {
-    const cruces = (numero: number) =>
-      temporada.jornadas
-        .find((j) => j.jornada === numero)
-        ?.partidos.map((p) => [p.local, p.visitante].sort().join('-'))
-        .sort();
-    const propuesta = (lista: readonly (readonly string[])[]) =>
-      lista.map((par) => [...par].sort().join('-')).sort();
+  const ida = temporada.jornadas.filter((j) => j.jornada <= 7);
+  const partidoEntre = (a: string, b: string) => {
+    for (const jornada of ida) {
+      const partido = jornada.partidos.find(
+        (p) => [p.local, p.visitante].sort().join() === [a, b].sort().join(),
+      );
+      if (partido !== undefined) return { jornada: jornada.jornada, partido };
+    }
+    return undefined;
+  };
+  const cruces = (numero: number) =>
+    temporada.jornadas
+      .find((j) => j.jornada === numero)
+      ?.partidos.map((p) => [p.local, p.visitante].sort().join('-'));
 
-    expect(cruces(8)).toEqual(propuesta(PROPUESTA_J8));
-    expect(cruces(9)).toEqual(propuesta(PROPUESTA_J9));
+  it('cada resultado recordado está en J1-J7 con su marcador y su nota', () => {
+    for (const r of RESULTADOS_RECORDADOS) {
+      const encontrado = partidoEntre(r.ganador, r.perdedor);
+      const resultado = encontrado?.partido.resultado;
+      const visto =
+        resultado === undefined
+          ? null
+          : encontrado?.partido.local === r.ganador
+            ? [resultado.local, resultado.visitante]
+            : [resultado.visitante, resultado.local];
+      expect(visto, `${r.ganador}-${r.perdedor}`).toEqual([...r.coronas]);
+      expect(encontrado?.partido.nota).toBe(NOTA_RECORDADO);
+    }
+  });
+
+  it('Nimaben juega la primera fecha contra Herobrain', () => {
+    expect(partidoEntre('Nimaben', 'Herobrain')?.jornada).toBe(1);
+  });
+
+  it('los pendientes que se saben quedan para J8 y J9, sin resultado', () => {
+    const pendientes = [...(cruces(8) ?? []), ...(cruces(9) ?? [])];
+    expect(pendientes).toHaveLength(10);
+    for (const par of ['Nimaben-Renuz', 'Eze23ml-Nimaben', 'Eli_as-LeonSB', 'Eli_as-Herobrain']) {
+      expect(pendientes).toContain(par);
+    }
     for (const jornada of temporada.jornadas.filter((j) => j.jornada >= 8)) {
       expect(jornada.partidos.every((p) => !p.resultado && !p.walkover)).toBe(true);
     }
+  });
+
+  it('LeonSB gana por walkover a Eze23ml y a Renuz, y Dullys falta a un partido', () => {
+    const walkovers = ida
+      .flatMap((j) => j.partidos)
+      .filter((p) => p.walkover !== undefined && p.walkover.reprogramadoPara === undefined)
+      .map((p) => p.walkover?.ausente)
+      .sort();
+    expect(walkovers).toEqual(['Dullys', 'Eze23ml', 'Renuz']);
   });
 
   it('solo Nimaben y Eli_as ganan a tres coronas, dos veces cada uno', () => {
@@ -138,11 +176,11 @@ describe('restaurar la temporada', () => {
       }[];
     };
 
-  it('carga los 90 partidos, 30 resultados y 5 walkovers', () => {
+  it('carga los 90 partidos, 29 resultados y 6 walkovers', () => {
     expect(resultado).toMatchObject({
       partidos: 90,
-      resultados: 30,
-      walkovers: 5,
+      resultados: 29,
+      walkovers: 6,
       aplazados: 3,
       jornadasConFecha: 9,
     });

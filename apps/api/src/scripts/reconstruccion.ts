@@ -18,7 +18,8 @@
  * - Solo Nimaben y Eli_as ganaron a tres coronas, dos partidos cada uno.
  * - Renuz perdió por incomparecencia los tres partidos que tenía pendientes,
  *   contra Eze23ml, Lucía y Herobrain.
- * - Los cruces de las jornadas 8 y 9.
+ * - Los siete partidos de Nimaben en J1-J7, con su marcador.
+ * - Los cruces de la jornada 8.
  *
  * Qué se sortea, porque no se sabe:
  *
@@ -103,39 +104,87 @@ export const VICTORIAS_TRES_CORONAS: Readonly<Partial<Record<Jugador, number>>> 
   Eli_as: 2,
 };
 
-/** Cruces de las jornadas 8 y 9 propuestos por el administrador. */
-export const PROPUESTA_J8: readonly (readonly [Jugador, Jugador])[] = [
-  ['Nimaben', 'Renuz'],
-  ['LeonSB', 'Lyuk'],
-  ['Eli_as', 'Esteban'],
-  ['Eze23ml', 'Dullys'],
-  ['Lucía', 'Herobrain'],
+export interface ResultadoRecordado {
+  readonly ganador: Jugador;
+  readonly perdedor: Jugador;
+  /** Coronas del ganador primero. */
+  readonly coronas: readonly [ganador: number, perdedor: number];
+}
+
+/**
+ * Resultados de J1-J7 que recuerda el administrador.
+ *
+ * Cuadran con la tabla: Nimaben y Eli_as recuerdan sus siete partidos, y en los
+ * dos casos victorias, derrotas, diferencia de coronas y victorias a tres
+ * coronas salen exactas. Del 3-0 de Nimaben a Eli_as, Nimaben recordaba solo
+ * que fue a tres coronas; lo que recuerda de Eli_as lo confirma.
+ */
+export const RESULTADOS_RECORDADOS: readonly ResultadoRecordado[] = [
+  // Los siete de Nimaben.
+  { ganador: 'Nimaben', perdedor: 'Herobrain', coronas: [1, 0] },
+  { ganador: 'Lucía', perdedor: 'Nimaben', coronas: [1, 0] },
+  { ganador: 'Nimaben', perdedor: 'Dullys', coronas: [3, 0] },
+  { ganador: 'Esteban', perdedor: 'Nimaben', coronas: [1, 0] },
+  { ganador: 'Lyuk', perdedor: 'Nimaben', coronas: [1, 0] },
+  { ganador: 'LeonSB', perdedor: 'Nimaben', coronas: [1, 0] },
+  { ganador: 'Nimaben', perdedor: 'Eli_as', coronas: [3, 0] },
+  // Los otros seis de Eli_as.
+  { ganador: 'Eli_as', perdedor: 'Renuz', coronas: [3, 0] },
+  { ganador: 'Eli_as', perdedor: 'Dullys', coronas: [3, 0] },
+  { ganador: 'Eli_as', perdedor: 'Lucía', coronas: [1, 0] },
+  { ganador: 'Esteban', perdedor: 'Eli_as', coronas: [1, 0] },
+  { ganador: 'Eze23ml', perdedor: 'Eli_as', coronas: [1, 0] },
+  { ganador: 'Lyuk', perdedor: 'Eli_as', coronas: [1, 0] },
+  // Sueltos de Lyuk, Eze23ml y LeonSB.
+  { ganador: 'Herobrain', perdedor: 'Lyuk', coronas: [1, 0] },
+  { ganador: 'Lucía', perdedor: 'Lyuk', coronas: [1, 0] },
+  { ganador: 'Eze23ml', perdedor: 'Lucía', coronas: [1, 0] },
+  { ganador: 'Lyuk', perdedor: 'LeonSB', coronas: [1, 0] },
 ];
-export const PROPUESTA_J9: readonly (readonly [Jugador, Jugador])[] = [
-  ['Lyuk', 'Renuz'],
-  ['Nimaben', 'Esteban'],
-  ['LeonSB', 'Dullys'],
-  ['Eli_as', 'Herobrain'],
-  ['Eze23ml', 'Lucía'],
+
+/**
+ * Rivales de Nimaben en el orden en que los contó. Del primero dijo que fue la
+ * primera fecha, y eso se respeta. El resto («luego», «después», «aquí me
+ * olvido») solo sirve para acercarse: con todo lo demás que se sabe, ningún
+ * calendario permite J2 Lucía y J3 Dullys, así que ese orden debe de ser el
+ * de los partidos jugados, no el de las jornadas.
+ */
+export const ORDEN_CONTADO_NIMABEN: readonly Jugador[] = [
+  'Herobrain',
+  'Lucía',
+  'Dullys',
+  'Esteban',
+  'Lyuk',
+  'LeonSB',
+  'Eli_as',
 ];
 
 /** Partidos de Renuz que estaban pendientes tras J7 y perdió por incomparecencia. */
 export const PENDIENTES_RENUZ: readonly Jugador[] = ['Herobrain', 'Lucía', 'Eze23ml'];
 
 /**
- * Victorias por incomparecencia de LeonSB.
+ * Otras victorias por incomparecencia que se recuerdan.
  *
- * El administrador recordaba que «puede» que LeonSB ganara así a Renuz y a
- * Eze23ml. No hay datos que lo confirmen ni lo descarten: la tabla admite las
- * dos cosas. Se incluyen porque es lo único que se recuerda, y porque sin ellas
- * el +3 de diferencia de coronas de LeonSB obligaría a seis victorias todas por
- * una corona y una derrota 0-3. Quitarlas es borrar esta lista y volver a
- * sortear.
+ * LeonSB a Eze23ml está confirmada. LeonSB a Renuz se recordaba como posible, y
+ * la tabla la pide: con lo recordado, a LeonSB le quedan cuatro victorias que
+ * deben sumar +3 de diferencia de coronas, y eso solo es posible si una de
+ * ellas fue sin jugar.
  */
 export const WALKOVERS_RECORDADOS: readonly { ganador: Jugador; ausente: Jugador }[] = [
-  { ganador: 'LeonSB', ausente: 'Renuz' },
   { ganador: 'LeonSB', ausente: 'Eze23ml' },
+  { ganador: 'LeonSB', ausente: 'Renuz' },
 ];
+
+/**
+ * Incomparecencias que nadie recuerda pero la tabla exige.
+ *
+ * Dullys perdió 0-3 con Nimaben y con Eli_as: −6. Para acabar en −7 con una
+ * victoria y cuatro derrotas más, esas cuatro derrotas no pueden ser todas
+ * jugadas (sumarían al menos −4 y su victoria, como mucho, +2). Con una sola
+ * incomparecencia sale: gana 2-0 y pierde las otras tres por una corona. Contra
+ * quién no se sabe: se sortea.
+ */
+export const AUSENCIAS_EXIGIDAS: readonly Jugador[] = ['Dullys'];
 
 /* -------------------------------------------------------------------------- */
 /* Fechas                                                                      */
@@ -170,47 +219,57 @@ export function isoMenos3(instante: number): string {
 export const PREFIJO_SEMILLA = 'liga-estabanquitos-2026-1/reconstruccion/';
 
 export const CRITERIOS = [
-  'Las jornadas 8 y 9 tienen exactamente los cruces propuestos, en ese orden. Eso obliga a que J1-J7 contengan los otros 35, que es lo que dice la tabla: cada jugador ya enfrentó a 7 rivales.',
-  'Coincide en local y visitante con la propuesta en 9 de los 10 partidos de J8 y J9, el máximo posible: ningún calendario del método del círculo coincide en los 10.',
-  'Los tres partidos pendientes de Renuz caen en tres jornadas seguidas: una ausencia de tres semanas es más creíble que tres sueltas.',
+  'Todos los partidos recordados, con resultado o por walkover, caen entre la J1 y la J7.',
+  'Nimaben juega la primera fecha contra Herobrain.',
+  'Los resultados de J1-J7 pueden dar la tabla con una sola incomparecencia además de las recordadas, la de Dullys: el mínimo, porque con lo recordado su diferencia de coronas no sale sin ninguna.',
+  'Los rivales de Nimaben, jornada a jornada, se parecen lo más posible al orden en que los contó: 3 inversiones respecto de «Herobrain, Lucía, Dullys y después el resto» y 7 respecto del orden completo, el mínimo con todo lo anterior. Ningún calendario permite J2 Lucía y J3 Dullys a la vez.',
 ] as const;
 
 const clave = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
-/** `true` si el calendario cumple los tres criterios de coherencia. */
+/** Parejas que se sabe que ya se enfrentaron en J1-J7. */
+const PAREJAS_JUGADAS: readonly (readonly [Jugador, Jugador])[] = [
+  ...RESULTADOS_RECORDADOS.map((r) => [r.ganador, r.perdedor] as const),
+  ...WALKOVERS_RECORDADOS.map((w) => [w.ganador, w.ausente] as const),
+  ...PENDIENTES_RENUZ.map((rival) => ['Renuz', rival] as const),
+];
+
+/** Rival de un jugador en una jornada. */
+function rivalEn(fixture: Fixture, jornada: number, jugador: string): string | undefined {
+  const partido = fixture.rounds
+    .find((round) => round.number === jornada)
+    ?.matches.find((match) => match.homeId === jugador || match.awayId === jugador);
+  if (partido === undefined) return undefined;
+  return partido.homeId === jugador ? partido.awayId : partido.homeId;
+}
+
+/**
+ * Inversiones del orden real de Nimaben respecto del contado: la parcial solo
+ * mira a los tres primeros (lo que contó en orden) contra todos los demás; la
+ * completa, a todas las parejas.
+ */
+export function inversionesNimaben(fixture: Fixture): { parcial: number; completa: number } {
+  const real = [1, 2, 3, 4, 5, 6, 7].map((n) => rivalEn(fixture, n, 'Nimaben'));
+  const posicion = (jugador: string) => real.indexOf(jugador);
+  let parcial = 0;
+  let completa = 0;
+  ORDEN_CONTADO_NIMABEN.forEach((antes, i) => {
+    for (const despues of ORDEN_CONTADO_NIMABEN.slice(i + 1)) {
+      if (posicion(antes) > posicion(despues)) {
+        completa += 1;
+        if (i < 3) parcial += 1;
+      }
+    }
+  });
+  return { parcial, completa };
+}
+
+/** `true` si el calendario cumple los criterios que no dependen de los resultados. */
 export function cumpleCriterios(fixture: Fixture): boolean {
-  const j8 = fixture.rounds[7]?.matches ?? [];
-  const j9 = fixture.rounds[8]?.matches ?? [];
-
-  const mismosCruces = (
-    partidos: readonly { homeId: string; awayId: string }[],
-    propuesta: readonly (readonly [string, string])[],
-  ): boolean => {
-    const esperados = new Set(propuesta.map(([a, b]) => clave(a, b)));
-    return (
-      partidos.length === esperados.size &&
-      partidos.every((partido) => esperados.has(clave(partido.homeId, partido.awayId)))
-    );
-  };
-  if (!mismosCruces(j8, PROPUESTA_J8) || !mismosCruces(j9, PROPUESTA_J9)) return false;
-
-  const localVisitante = new Set([...PROPUESTA_J8, ...PROPUESTA_J9].map(([l, v]) => `${l}>${v}`));
-  const coincidencias = [...j8, ...j9].filter((partido) =>
-    localVisitante.has(`${partido.homeId}>${partido.awayId}`),
-  ).length;
-  if (coincidencias < 9) return false;
-
-  const jornadas = PENDIENTES_RENUZ.map((rival) => jornadaDe(fixture, 'Renuz', rival)).sort(
-    (a, b) => a - b,
-  );
-  const [primera, segunda, tercera] = jornadas;
-  return (
-    primera !== undefined &&
-    tercera !== undefined &&
-    tercera <= 7 &&
-    segunda === primera + 1 &&
-    tercera === primera + 2
-  );
+  if (PAREJAS_JUGADAS.some(([a, b]) => jornadaDe(fixture, a, b) > 7)) return false;
+  if (rivalEn(fixture, 1, 'Nimaben') !== ORDEN_CONTADO_NIMABEN[0]) return false;
+  const { parcial, completa } = inversionesNimaben(fixture);
+  return parcial <= 3 && completa <= 7;
 }
 
 /** Jornada de la ida en la que se cruzan dos jugadores. */
@@ -225,29 +284,20 @@ function jornadaDe(fixture: Fixture, a: string, b: string): number {
 }
 
 /**
- * Filtro rápido: ¿las jornadas 8 y 9 de este orden son las propuestas?
+ * Parejas de una jornada de la ida (0 = J1) para un orden de jugadores.
  *
- * Reproduce el emparejamiento del método del círculo de `generateFixture` solo
- * para esas dos jornadas, sobre índices, para poder probar millones de
- * semillas en segundos. Es solo un filtro: lo que pasa se vuelve a comprobar
- * con el generador oficial.
+ * Reproduce el emparejamiento del método del círculo de `generateFixture`
+ * sobre índices, para poder probar millones de semillas en segundos. Es solo
+ * un filtro: lo que pasa se vuelve a comprobar con el generador oficial.
  */
-function jornadas8y9Encajan(orden: readonly number[], j8: Uint8Array, j9: Uint8Array): boolean {
+function parejasDeRonda(orden: readonly number[], ronda: number): [number, number][] {
   const fijo = orden[0] as number;
   const giratorio = orden.slice(1);
   const n = giratorio.length;
-  const encaja = (ronda: number, objetivo: Uint8Array): boolean => {
-    const en = (j: number): number => giratorio[(((j - ronda) % n) + n) % n] as number;
-    const parejas: [number, number][] = [
-      [fijo, en(n - 1)],
-      [en(0), en(n - 2)],
-      [en(1), en(n - 3)],
-      [en(2), en(n - 4)],
-      [en(3), en(n - 5)],
-    ];
-    return parejas.every(([a, b]) => objetivo[Math.min(a, b) * 10 + Math.max(a, b)] === 1);
-  };
-  return encaja(7, j8) && encaja(8, j9);
+  const en = (j: number): number => giratorio[(((j - ronda) % n) + n) % n] as number;
+  const parejas: [number, number][] = [[fijo, en(n - 1)]];
+  for (let i = 0; i < (n - 1) / 2; i += 1) parejas.push([en(i), en(n - 2 - i)]);
+  return parejas;
 }
 
 export interface CalendarioSorteado {
@@ -259,30 +309,56 @@ export interface CalendarioSorteado {
 
 /**
  * Prueba `PREFIJO_SEMILLA + 1`, `+ 2`... y se queda con la primera semilla
- * cuyo calendario cumple los criterios. Tarda unos segundos.
+ * cuyo calendario cumple los criterios y admite resultados. Tarda unos
+ * segundos.
  */
 export function sortearCalendario(maxIntentos = 200_000_000): CalendarioSorteado {
   const indice = new Map<string, number>(JUGADORES.map((nombre, i) => [nombre, i]));
-  const tabla = (propuesta: readonly (readonly [string, string])[]): Uint8Array => {
-    const marcas = new Uint8Array(100);
-    for (const [a, b] of propuesta) {
-      const x = indice.get(a) as number;
-      const y = indice.get(b) as number;
-      marcas[Math.min(x, y) * 10 + Math.max(x, y)] = 1;
-    }
-    return marcas;
-  };
-  const j8 = tabla(PROPUESTA_J8);
-  const j9 = tabla(PROPUESTA_J9);
+  const nimaben = indice.get('Nimaben') as number;
+  const primerRival = indice.get(ORDEN_CONTADO_NIMABEN[0] as string) as number;
+  const jugadas = new Uint8Array(100);
+  for (const [a, b] of PAREJAS_JUGADAS) {
+    const x = indice.get(a) as number;
+    const y = indice.get(b) as number;
+    jugadas[Math.min(x, y) * 10 + Math.max(x, y)] = 1;
+  }
   const plazas = JUGADORES.map((_, i) => i);
+
+  const encaja = (orden: readonly number[]): boolean =>
+    parejasDeRonda(orden, 0).some(
+      ([a, b]) => (a === nimaben && b === primerRival) || (b === nimaben && a === primerRival),
+    ) &&
+    [7, 8].every((ronda) =>
+      parejasDeRonda(orden, ronda).every(
+        ([a, b]) => jugadas[Math.min(a, b) * 10 + Math.max(a, b)] === 0,
+      ),
+    );
 
   for (let intento = 1; intento <= maxIntentos; intento += 1) {
     const semilla = `${PREFIJO_SEMILLA}${intento}`;
-    if (!jornadas8y9Encajan(shuffle(plazas, createRandom(semilla)), j8, j9)) continue;
+    if (!encaja(shuffle(plazas, createRandom(semilla)))) continue;
     const fixture = generateFixture([...JUGADORES], { seed: semilla, legs: 2 });
-    if (cumpleCriterios(fixture)) return { semilla, intento, fixture };
+    if (!cumpleCriterios(fixture)) continue;
+    try {
+      sortearResultados(partidosDeIda(fixture), semilla);
+    } catch {
+      continue;
+    }
+    return { semilla, intento, fixture };
   }
   throw new Error(`Ninguna de las ${maxIntentos} semillas cumple los criterios.`);
+}
+
+function partidosDeIda(fixture: Fixture): PartidoIda[] {
+  return fixture.rounds
+    .filter((round) => round.number <= 7)
+    .flatMap((round) =>
+      round.matches.map((match) => ({
+        jornada: round.number,
+        local: match.homeId as Jugador,
+        visitante: match.awayId as Jugador,
+      })),
+    );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -296,8 +372,19 @@ export interface PartidoIda {
 }
 
 export type Desenlace =
-  | { readonly tipo: 'JUGADO'; readonly coronasLocal: number; readonly coronasVisitante: number }
-  | { readonly tipo: 'WALKOVER'; readonly ausente: Jugador; readonly pendiente: boolean };
+  | {
+      readonly tipo: 'JUGADO';
+      readonly coronasLocal: number;
+      readonly coronasVisitante: number;
+      /** `true` si el marcador sale de un recuerdo y no del sorteo. */
+      readonly recordado: boolean;
+    }
+  | {
+      readonly tipo: 'WALKOVER';
+      readonly ausente: Jugador;
+      /** Pendiente de Renuz, recordado, o exigido por la tabla. */
+      readonly origen: 'PENDIENTE' | 'RECORDADO' | 'EXIGIDO';
+    };
 
 interface Objetivo {
   victorias: number;
@@ -348,9 +435,13 @@ function ordenPonderado<T extends { peso: number }>(
  * jugador termine con exactamente sus victorias, derrotas, diferencia de
  * coronas y victorias a tres coronas.
  *
- * Dos fases: primero quién gana cada partido (con las victorias y derrotas
- * justas de cada uno), después el marcador (con la DC y las tres coronas
- * justas). Si un reparto de ganadores no admite marcadores, se sortea otro.
+ * Los walkovers y los partidos de Nimaben no se sortean: se ponen como se
+ * recuerdan y se descuentan de lo que le falta a cada uno.
+ *
+ * Dos fases para el resto: primero quién gana cada partido (con las victorias
+ * y derrotas justas de cada uno), después el marcador (con la DC y las tres
+ * coronas justas). Si un reparto de ganadores no admite marcadores, se sortea
+ * otro.
  */
 export function sortearResultados(
   partidos: readonly PartidoIda[],
@@ -359,15 +450,16 @@ export function sortearResultados(
   const azar = createRandom(`${semilla}/resultados`);
 
   const desenlaces = new Map<PartidoIda, Desenlace>();
-  const walkovers = new Map<string, { ausente: Jugador; pendiente: boolean }>();
+  const walkovers = new Map<string, { ausente: Jugador; origen: 'PENDIENTE' | 'RECORDADO' }>();
   for (const rival of PENDIENTES_RENUZ) {
-    walkovers.set(clave('Renuz', rival), { ausente: 'Renuz', pendiente: true });
+    walkovers.set(clave('Renuz', rival), { ausente: 'Renuz', origen: 'PENDIENTE' });
   }
   for (const { ganador, ausente } of WALKOVERS_RECORDADOS) {
-    walkovers.set(clave(ganador, ausente), { ausente, pendiente: false });
+    walkovers.set(clave(ganador, ausente), { ausente, origen: 'RECORDADO' });
   }
+  const recordados = new Map(RESULTADOS_RECORDADOS.map((r) => [clave(r.ganador, r.perdedor), r]));
 
-  // Lo que le falta a cada uno una vez descontados los walkovers.
+  // Lo que le falta a cada uno una vez descontado lo que se sabe.
   const objetivo = new Map<Jugador, Objetivo>();
   for (const jugador of JUGADORES) {
     const fila = CAPTURA_J7[jugador];
@@ -383,48 +475,106 @@ export function sortearResultados(
     (objetivo.get(rival) as Objetivo).victorias += 1;
     (objetivo.get('Renuz') as Objetivo).derrotas += 1;
   }
+  const meta = (jugador: Jugador) => objetivo.get(jugador) as Objetivo;
 
-  const jugados: PartidoIda[] = [];
+  const libres: PartidoIda[] = [];
   for (const partido of partidos) {
     const walkover = walkovers.get(clave(partido.local, partido.visitante));
-    if (walkover === undefined) {
-      jugados.push(partido);
+    if (walkover !== undefined) {
+      desenlaces.set(partido, { tipo: 'WALKOVER', ...walkover });
+      const ganador = walkover.ausente === partido.local ? partido.visitante : partido.local;
+      meta(ganador).victorias -= 1;
+      meta(walkover.ausente).derrotas -= 1;
       continue;
     }
-    desenlaces.set(partido, { tipo: 'WALKOVER', ...walkover });
-    const ganador = walkover.ausente === partido.local ? partido.visitante : partido.local;
-    (objetivo.get(ganador) as Objetivo).victorias -= 1;
-    (objetivo.get(walkover.ausente) as Objetivo).derrotas -= 1;
-  }
-  if (desenlaces.size !== walkovers.size) {
-    throw new Error('Algún walkover conocido no corresponde a un partido de J1-J7.');
-  }
-  for (const jugador of JUGADORES) {
-    const meta = objetivo.get(jugador) as Objetivo;
-    const cuenta = jugados.filter((p) => p.local === jugador || p.visitante === jugador).length;
-    if (meta.victorias < 0 || meta.derrotas < 0 || meta.victorias + meta.derrotas !== cuenta) {
-      throw new Error(`Los partidos de ${jugador} no cuadran con su tabla.`);
-    }
-  }
 
-  for (let intento = 0; intento < 5_000; intento += 1) {
-    const ganadores = sortearGanadores(jugados, objetivo, azar);
-    if (ganadores === null) continue;
-    const marcadores = sortearMarcadores(jugados, ganadores, objetivo, azar);
-    if (marcadores === null) continue;
-
-    jugados.forEach((partido, i) => {
-      const [deGanador, dePerdedor] = marcadores[i] as readonly [number, number];
-      const ganaLocal = ganadores[i] === partido.local;
+    const recuerdo = recordados.get(clave(partido.local, partido.visitante));
+    if (recuerdo !== undefined) {
+      const [deGanador, dePerdedor] = recuerdo.coronas;
+      const ganaLocal = partido.local === recuerdo.ganador;
       desenlaces.set(partido, {
         tipo: 'JUGADO',
         coronasLocal: ganaLocal ? deGanador : dePerdedor,
         coronasVisitante: ganaLocal ? dePerdedor : deGanador,
+        recordado: true,
       });
-    });
-    return desenlaces;
+      const margen = deGanador - dePerdedor;
+      meta(recuerdo.ganador).victorias -= 1;
+      meta(recuerdo.ganador).dc -= margen;
+      if (deGanador === 3) meta(recuerdo.ganador).tresCoronas -= 1;
+      meta(recuerdo.perdedor).derrotas -= 1;
+      meta(recuerdo.perdedor).dc += margen;
+      continue;
+    }
+
+    libres.push(partido);
   }
-  throw new Error('No se encontró un reparto de resultados compatible con la tabla.');
+  if (desenlaces.size !== walkovers.size + recordados.size) {
+    throw new Error('Algún walkover o resultado recordado no corresponde a un partido de J1-J7.');
+  }
+
+  /*
+    Las incomparecencias exigidas: se prueba contra qué rival, en orden
+    aleatorio, hasta dar con una que admita el resto de resultados.
+  */
+  const probar = (ausencias: readonly Jugador[], jugados: readonly PartidoIda[]): boolean => {
+    const [ausente, ...resto] = ausencias;
+    if (ausente === undefined) {
+      for (const jugador of JUGADORES) {
+        const m = meta(jugador);
+        const cuenta = jugados.filter((p) => p.local === jugador || p.visitante === jugador).length;
+        if (m.victorias < 0 || m.derrotas < 0 || m.tresCoronas < 0) return false;
+        if (m.victorias + m.derrotas !== cuenta) return false;
+      }
+      for (let intento = 0; intento < 300; intento += 1) {
+        const ganadores = sortearGanadores(jugados, objetivo, azar);
+        if (ganadores === null) continue;
+        const marcadores = sortearMarcadores(jugados, ganadores, objetivo, azar);
+        if (marcadores === null) continue;
+        jugados.forEach((partido, i) => {
+          const [deGanador, dePerdedor] = marcadores[i] as readonly [number, number];
+          const ganaLocal = ganadores[i] === partido.local;
+          desenlaces.set(partido, {
+            tipo: 'JUGADO',
+            coronasLocal: ganaLocal ? deGanador : dePerdedor,
+            coronasVisitante: ganaLocal ? dePerdedor : deGanador,
+            recordado: false,
+          });
+        });
+        return true;
+      }
+      return false;
+    }
+
+    const opciones = ordenPonderado(
+      jugados
+        .filter((p) => p.local === ausente || p.visitante === ausente)
+        .map((partido) => ({ partido, peso: 1 })),
+      azar,
+    );
+    for (const { partido } of opciones) {
+      const rival = partido.local === ausente ? partido.visitante : partido.local;
+      meta(rival).victorias -= 1;
+      meta(ausente).derrotas -= 1;
+      desenlaces.set(partido, { tipo: 'WALKOVER', ausente, origen: 'EXIGIDO' });
+      if (
+        probar(
+          resto,
+          jugados.filter((p) => p !== partido),
+        )
+      )
+        return true;
+      desenlaces.delete(partido);
+      meta(rival).victorias += 1;
+      meta(ausente).derrotas += 1;
+    }
+    return false;
+  };
+
+  if (!probar(AUSENCIAS_EXIGIDAS, libres)) {
+    throw new Error('No se encontró un reparto de resultados compatible con la tabla.');
+  }
+  return desenlaces;
 }
 
 function sortearGanadores(
@@ -557,6 +707,8 @@ export interface PartidoArchivo {
   readonly local: string;
   readonly visitante: string;
   readonly resultado?: ResultadoArchivo;
+  /** Nota propia del resultado. Sin ella se usa `notaResultados`. */
+  readonly nota?: string;
   readonly walkover?: WalkoverArchivo;
 }
 
@@ -598,28 +750,26 @@ export interface TemporadaArchivo {
 export const AVISO =
   'Reconstrucción. El registro de las jornadas 1 a 7 se perdió en noviembre de 2026. ' +
   'Lo que se conserva es real: la clasificación tras la J7, quién ganó a tres coronas, ' +
-  'los walkovers de Renuz y los cruces de J8 y J9. El orden del calendario, los marcadores ' +
-  'de J1-J7 y sus fechas salen de un sorteo con semilla que reproduce exactamente esa ' +
-  'clasificación. Se puede regenerar con «npm run reconstruccion:sortear».';
+  'los walkovers de Renuz y de LeonSB y los resultados que recuerda la administración ' +
+  '(los siete de Nimaben y de Eli_as, y algunos de Lyuk, Eze23ml y LeonSB). El orden del ' +
+  'calendario, el resto de marcadores de J1-J7, una incomparecencia de Dullys que la tabla ' +
+  'exige y las fechas salen de un sorteo con semilla que reproduce exactamente esa ' +
+  'clasificación. Los cruces de J8 y J9 salen de ese calendario: la propuesta inicial ' +
+  'incluía partidos ya jugados. Se puede regenerar con «npm run reconstruccion:sortear».';
 
 export const NOTA_RESULTADO =
   'Resultado reconstruido por sorteo: el registro original de J1-J7 se perdió. ' +
   'La clasificación tras la J7 es la real.';
+
+export const NOTA_RECORDADO =
+  'Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió.';
 
 /** Construye la temporada a partir de un calendario ya sorteado. */
 export function construirTemporada(calendario: CalendarioSorteado): TemporadaArchivo {
   const { fixture, semilla } = calendario;
   if (!cumpleCriterios(fixture)) throw new Error('El calendario no cumple los criterios.');
 
-  const ida: PartidoIda[] = fixture.rounds
-    .filter((round) => round.number <= 7)
-    .flatMap((round) =>
-      round.matches.map((match) => ({
-        jornada: round.number,
-        local: match.homeId as Jugador,
-        visitante: match.awayId as Jugador,
-      })),
-    );
+  const ida = partidosDeIda(fixture);
   const desenlaces = sortearResultados(ida, semilla);
 
   const inicioJ1 = Date.parse(PRIMERA_JORNADA);
@@ -644,14 +794,18 @@ export function construirTemporada(calendario: CalendarioSorteado): TemporadaArc
         return {
           ...base,
           resultado: { local: desenlace.coronasLocal, visitante: desenlace.coronasVisitante },
+          ...(desenlace.recordado ? { nota: NOTA_RECORDADO } : {}),
         };
       }
-      if (!desenlace.pendiente) {
+      if (desenlace.origen !== 'PENDIENTE') {
         return {
           ...base,
           walkover: {
             ausente: desenlace.ausente,
-            motivo: `Incomparecencia de ${desenlace.ausente} según recuerda la administración (registro original perdido).`,
+            motivo:
+              desenlace.origen === 'RECORDADO'
+                ? `Incomparecencia de ${desenlace.ausente} según recuerda la administración (registro original perdido).`
+                : `Incomparecencia de ${desenlace.ausente} reconstruida: con los resultados recordados, la clasificación la exige. El rival es sorteado (registro original perdido).`,
           },
         };
       }

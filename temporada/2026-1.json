@@ -1,7 +1,7 @@
 {
   "formato": 1,
   "temporada": "2026-1",
-  "aviso": "Reconstrucción. El registro de las jornadas 1 a 7 se perdió en noviembre de 2026. Lo que se conserva es real: la clasificación tras la J7, quién ganó a tres coronas, los walkovers de Renuz y los cruces de J8 y J9. El orden del calendario, los marcadores de J1-J7 y sus fechas salen de un sorteo con semilla que reproduce exactamente esa clasificación. Se puede regenerar con «npm run reconstruccion:sortear».",
+  "aviso": "Reconstrucción. El registro de las jornadas 1 a 7 se perdió en noviembre de 2026. Lo que se conserva es real: la clasificación tras la J7, quién ganó a tres coronas, los walkovers de Renuz y de LeonSB y los resultados que recuerda la administración (los siete de Nimaben y de Eli_as, y algunos de Lyuk, Eze23ml y LeonSB). El orden del calendario, el resto de marcadores de J1-J7, una incomparecencia de Dullys que la tabla exige y las fechas salen de un sorteo con semilla que reproduce exactamente esa clasificación. Los cruces de J8 y J9 salen de ese calendario: la propuesta inicial incluía partidos ya jugados. Se puede regenerar con «npm run reconstruccion:sortear».",
   "zonaHoraria": "UTC-03:00",
   "jugadores": [
     {
@@ -46,12 +46,13 @@
     }
   ],
   "sorteo": {
-    "semilla": "liga-estabanquitos-2026-1/reconstruccion/227373",
-    "intento": 227373,
+    "semilla": "liga-estabanquitos-2026-1/reconstruccion/720332",
+    "intento": 720332,
     "criterios": [
-      "Las jornadas 8 y 9 tienen exactamente los cruces propuestos, en ese orden. Eso obliga a que J1-J7 contengan los otros 35, que es lo que dice la tabla: cada jugador ya enfrentó a 7 rivales.",
-      "Coincide en local y visitante con la propuesta en 9 de los 10 partidos de J8 y J9, el máximo posible: ningún calendario del método del círculo coincide en los 10.",
-      "Los tres partidos pendientes de Renuz caen en tres jornadas seguidas: una ausencia de tres semanas es más creíble que tres sueltas."
+      "Todos los partidos recordados, con resultado o por walkover, caen entre la J1 y la J7.",
+      "Nimaben juega la primera fecha contra Herobrain.",
+      "Los resultados de J1-J7 pueden dar la tabla con una sola incomparecencia además de las recordadas, la de Dullys: el mínimo, porque con lo recordado su diferencia de coronas no sale sin ninguna.",
+      "Los rivales de Nimaben, jornada a jornada, se parecen lo más posible al orden en que los contó: 3 inversiones respecto de «Herobrain, Lucía, Dullys y después el resto» y 7 respecto del orden completo, el mínimo con todo lo anterior. Ningún calendario permite J2 Lucía y J3 Dullys a la vez."
     ]
   },
   "intervaloMinutos": 15,
@@ -64,35 +65,36 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Esteban",
-          "resultado": {
-            "local": 1,
-            "visitante": 2
-          }
-        },
-        {
-          "orden": 2,
-          "local": "Lyuk",
-          "visitante": "Dullys",
-          "resultado": {
-            "local": 2,
-            "visitante": 1
-          }
-        },
-        {
-          "orden": 3,
-          "local": "Nimaben",
-          "visitante": "Herobrain",
+          "local": "Esteban",
+          "visitante": "Eze23ml",
           "resultado": {
             "local": 1,
             "visitante": 0
           }
         },
         {
+          "orden": 2,
+          "local": "Lucía",
+          "visitante": "Eli_as",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
+        },
+        {
+          "orden": 3,
+          "local": "Lyuk",
+          "visitante": "Renuz",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
+          }
+        },
+        {
           "orden": 4,
           "local": "LeonSB",
-          "visitante": "Lucía",
+          "visitante": "Dullys",
           "resultado": {
             "local": 1,
             "visitante": 0
@@ -100,12 +102,13 @@
         },
         {
           "orden": 5,
-          "local": "Eli_as",
-          "visitante": "Eze23ml",
+          "local": "Nimaben",
+          "visitante": "Herobrain",
           "resultado": {
             "local": 1,
-            "visitante": 2
-          }
+            "visitante": 0
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -116,48 +119,52 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Dullys",
-          "visitante": "Renuz",
+          "local": "Eli_as",
+          "visitante": "Esteban",
           "resultado": {
-            "local": 2,
-            "visitante": 0
-          }
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         },
         {
           "orden": 2,
-          "local": "Esteban",
-          "visitante": "Herobrain",
-          "resultado": {
-            "local": 2,
-            "visitante": 0
+          "local": "Eze23ml",
+          "visitante": "Renuz",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Renuz no se presentó al partido pendiente.",
+            "reprogramadoPara": "2026-11-01T21:15:00-03:00"
           }
         },
         {
           "orden": 3,
-          "local": "Lyuk",
-          "visitante": "Lucía",
+          "local": "Lucía",
+          "visitante": "Dullys",
           "resultado": {
-            "local": 2,
-            "visitante": 1
-          }
-        },
-        {
-          "orden": 4,
-          "local": "Nimaben",
-          "visitante": "Eze23ml",
-          "resultado": {
-            "local": 1,
+            "local": 0,
             "visitante": 2
           }
         },
         {
+          "orden": 4,
+          "local": "Lyuk",
+          "visitante": "Herobrain",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
+        },
+        {
           "orden": 5,
           "local": "LeonSB",
-          "visitante": "Eli_as",
+          "visitante": "Nimaben",
           "resultado": {
             "local": 1,
             "visitante": 0
-          }
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -168,49 +175,51 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Herobrain",
-          "walkover": {
-            "ausente": "Renuz",
-            "motivo": "Renuz no se presentó al partido pendiente.",
-            "reprogramadoPara": "2026-11-01T21:15:00-03:00"
+          "local": "Esteban",
+          "visitante": "Renuz",
+          "resultado": {
+            "local": 2,
+            "visitante": 1
           }
         },
         {
           "orden": 2,
-          "local": "Dullys",
-          "visitante": "Lucía",
+          "local": "Eli_as",
+          "visitante": "Dullys",
           "resultado": {
-            "local": 0,
-            "visitante": 1
-          }
+            "local": 3,
+            "visitante": 0
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         },
         {
           "orden": 3,
-          "local": "Esteban",
-          "visitante": "Eze23ml",
+          "local": "Eze23ml",
+          "visitante": "Herobrain",
           "resultado": {
             "local": 0,
-            "visitante": 2
+            "visitante": 1
           }
         },
         {
           "orden": 4,
-          "local": "Lyuk",
-          "visitante": "Eli_as",
+          "local": "Lucía",
+          "visitante": "Nimaben",
           "resultado": {
             "local": 1,
             "visitante": 0
-          }
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         },
         {
           "orden": 5,
-          "local": "Nimaben",
+          "local": "Lyuk",
           "visitante": "LeonSB",
           "resultado": {
-            "local": 0,
-            "visitante": 1
-          }
+            "local": 1,
+            "visitante": 0
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -221,8 +230,17 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Lucía",
-          "visitante": "Renuz",
+          "local": "Dullys",
+          "visitante": "Esteban",
+          "walkover": {
+            "ausente": "Dullys",
+            "motivo": "Incomparecencia de Dullys reconstruida: con los resultados recordados, la clasificación la exige. El rival es sorteado (registro original perdido)."
+          }
+        },
+        {
+          "orden": 2,
+          "local": "Renuz",
+          "visitante": "Herobrain",
           "walkover": {
             "ausente": "Renuz",
             "motivo": "Renuz no se presentó al partido pendiente.",
@@ -230,40 +248,33 @@
           }
         },
         {
-          "orden": 2,
-          "local": "Herobrain",
-          "visitante": "Eze23ml",
-          "resultado": {
-            "local": 1,
-            "visitante": 0
-          }
-        },
-        {
           "orden": 3,
-          "local": "Dullys",
-          "visitante": "Eli_as",
-          "resultado": {
-            "local": 0,
-            "visitante": 2
-          }
-        },
-        {
-          "orden": 4,
-          "local": "Esteban",
-          "visitante": "LeonSB",
-          "resultado": {
-            "local": 2,
-            "visitante": 1
-          }
-        },
-        {
-          "orden": 5,
-          "local": "Lyuk",
+          "local": "Eli_as",
           "visitante": "Nimaben",
           "resultado": {
             "local": 0,
             "visitante": 3
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
+        },
+        {
+          "orden": 4,
+          "local": "Eze23ml",
+          "visitante": "LeonSB",
+          "walkover": {
+            "ausente": "Eze23ml",
+            "motivo": "Incomparecencia de Eze23ml según recuerda la administración (registro original perdido)."
           }
+        },
+        {
+          "orden": 5,
+          "local": "Lucía",
+          "visitante": "Lyuk",
+          "resultado": {
+            "local": 1,
+            "visitante": 0
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -274,49 +285,51 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Eze23ml",
-          "walkover": {
-            "ausente": "Renuz",
-            "motivo": "Renuz no se presentó al partido pendiente.",
-            "reprogramadoPara": "2026-11-01T21:45:00-03:00"
+          "local": "Esteban",
+          "visitante": "Herobrain",
+          "resultado": {
+            "local": 2,
+            "visitante": 0
           }
         },
         {
           "orden": 2,
-          "local": "Lucía",
-          "visitante": "Eli_as",
-          "resultado": {
-            "local": 2,
-            "visitante": 1
-          }
-        },
-        {
-          "orden": 3,
-          "local": "Herobrain",
-          "visitante": "LeonSB",
-          "resultado": {
-            "local": 0,
-            "visitante": 1
-          }
-        },
-        {
-          "orden": 4,
           "local": "Dullys",
           "visitante": "Nimaben",
           "resultado": {
             "local": 0,
             "visitante": 3
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
+        },
+        {
+          "orden": 3,
+          "local": "Renuz",
+          "visitante": "LeonSB",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Incomparecencia de Renuz según recuerda la administración (registro original perdido)."
           }
         },
         {
-          "orden": 5,
-          "local": "Esteban",
+          "orden": 4,
+          "local": "Eli_as",
           "visitante": "Lyuk",
+          "resultado": {
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
+        },
+        {
+          "orden": 5,
+          "local": "Eze23ml",
+          "visitante": "Lucía",
           "resultado": {
             "local": 1,
             "visitante": 0
-          }
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -327,48 +340,51 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Eli_as",
-          "visitante": "Renuz",
+          "local": "Nimaben",
+          "visitante": "Esteban",
           "resultado": {
-            "local": 3,
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
+        },
+        {
+          "orden": 2,
+          "local": "Herobrain",
+          "visitante": "LeonSB",
+          "resultado": {
+            "local": 0,
             "visitante": 1
           }
         },
         {
-          "orden": 2,
-          "local": "Eze23ml",
-          "visitante": "LeonSB",
-          "walkover": {
-            "ausente": "Eze23ml",
-            "motivo": "Incomparecencia de Eze23ml según recuerda la administración (registro original perdido)."
-          }
-        },
-        {
           "orden": 3,
-          "local": "Lucía",
-          "visitante": "Nimaben",
+          "local": "Dullys",
+          "visitante": "Lyuk",
           "resultado": {
             "local": 1,
-            "visitante": 0
+            "visitante": 2
           }
         },
         {
           "orden": 4,
-          "local": "Herobrain",
-          "visitante": "Lyuk",
-          "resultado": {
-            "local": 0,
-            "visitante": 2
+          "local": "Renuz",
+          "visitante": "Lucía",
+          "walkover": {
+            "ausente": "Renuz",
+            "motivo": "Renuz no se presentó al partido pendiente.",
+            "reprogramadoPara": "2026-11-01T21:45:00-03:00"
           }
         },
         {
           "orden": 5,
-          "local": "Dullys",
-          "visitante": "Esteban",
+          "local": "Eli_as",
+          "visitante": "Eze23ml",
           "resultado": {
-            "local": 1,
-            "visitante": 2
-          }
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -379,26 +395,27 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
+          "local": "Esteban",
           "visitante": "LeonSB",
-          "walkover": {
-            "ausente": "Renuz",
-            "motivo": "Incomparecencia de Renuz según recuerda la administración (registro original perdido)."
+          "resultado": {
+            "local": 0,
+            "visitante": 1
           }
         },
         {
           "orden": 2,
-          "local": "Eli_as",
-          "visitante": "Nimaben",
+          "local": "Nimaben",
+          "visitante": "Lyuk",
           "resultado": {
-            "local": 3,
-            "visitante": 2
-          }
+            "local": 0,
+            "visitante": 1
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         },
         {
           "orden": 3,
-          "local": "Eze23ml",
-          "visitante": "Lyuk",
+          "local": "Herobrain",
+          "visitante": "Lucía",
           "resultado": {
             "local": 0,
             "visitante": 2
@@ -406,8 +423,8 @@
         },
         {
           "orden": 4,
-          "local": "Lucía",
-          "visitante": "Esteban",
+          "local": "Dullys",
+          "visitante": "Eze23ml",
           "resultado": {
             "local": 0,
             "visitante": 1
@@ -415,12 +432,13 @@
         },
         {
           "orden": 5,
-          "local": "Herobrain",
-          "visitante": "Dullys",
+          "local": "Renuz",
+          "visitante": "Eli_as",
           "resultado": {
-            "local": 2,
-            "visitante": 1
-          }
+            "local": 0,
+            "visitante": 3
+          },
+          "nota": "Resultado según lo recuerda la administración: el registro original de J1-J7 se perdió."
         }
       ]
     },
@@ -431,28 +449,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Nimaben",
-          "visitante": "Renuz"
+          "local": "Lyuk",
+          "visitante": "Esteban"
         },
         {
           "orden": 2,
           "local": "LeonSB",
-          "visitante": "Lyuk"
+          "visitante": "Lucía"
         },
         {
           "orden": 3,
-          "local": "Eli_as",
-          "visitante": "Esteban"
+          "local": "Nimaben",
+          "visitante": "Eze23ml"
         },
         {
           "orden": 4,
-          "local": "Eze23ml",
-          "visitante": "Dullys"
+          "local": "Herobrain",
+          "visitante": "Eli_as"
         },
         {
           "orden": 5,
-          "local": "Lucía",
-          "visitante": "Herobrain"
+          "local": "Dullys",
+          "visitante": "Renuz"
         }
       ]
     },
@@ -463,28 +481,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Lyuk"
+          "local": "Esteban",
+          "visitante": "Lucía"
         },
         {
           "orden": 2,
-          "local": "Nimaben",
-          "visitante": "Esteban"
+          "local": "Lyuk",
+          "visitante": "Eze23ml"
         },
         {
           "orden": 3,
           "local": "LeonSB",
-          "visitante": "Dullys"
+          "visitante": "Eli_as"
         },
         {
           "orden": 4,
-          "local": "Eli_as",
-          "visitante": "Herobrain"
+          "local": "Nimaben",
+          "visitante": "Renuz"
         },
         {
           "orden": 5,
-          "local": "Eze23ml",
-          "visitante": "Lucía"
+          "local": "Herobrain",
+          "visitante": "Dullys"
         }
       ]
     },
@@ -495,28 +513,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Esteban",
-          "visitante": "Renuz"
+          "local": "Eze23ml",
+          "visitante": "Esteban"
         },
         {
           "orden": 2,
-          "local": "Dullys",
-          "visitante": "Lyuk"
+          "local": "Eli_as",
+          "visitante": "Lucía"
         },
         {
           "orden": 3,
-          "local": "Herobrain",
-          "visitante": "Nimaben"
+          "local": "Renuz",
+          "visitante": "Lyuk"
         },
         {
           "orden": 4,
-          "local": "Lucía",
+          "local": "Dullys",
           "visitante": "LeonSB"
         },
         {
           "orden": 5,
-          "local": "Eze23ml",
-          "visitante": "Eli_as"
+          "local": "Herobrain",
+          "visitante": "Nimaben"
         }
       ]
     },
@@ -527,27 +545,27 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Dullys"
+          "local": "Esteban",
+          "visitante": "Eli_as"
         },
         {
           "orden": 2,
-          "local": "Herobrain",
-          "visitante": "Esteban"
+          "local": "Renuz",
+          "visitante": "Eze23ml"
         },
         {
           "orden": 3,
-          "local": "Lucía",
-          "visitante": "Lyuk"
+          "local": "Dullys",
+          "visitante": "Lucía"
         },
         {
           "orden": 4,
-          "local": "Eze23ml",
-          "visitante": "Nimaben"
+          "local": "Herobrain",
+          "visitante": "Lyuk"
         },
         {
           "orden": 5,
-          "local": "Eli_as",
+          "local": "Nimaben",
           "visitante": "LeonSB"
         }
       ]
@@ -559,28 +577,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Herobrain",
-          "visitante": "Renuz"
-        },
-        {
-          "orden": 2,
-          "local": "Lucía",
-          "visitante": "Dullys"
-        },
-        {
-          "orden": 3,
-          "local": "Eze23ml",
+          "local": "Renuz",
           "visitante": "Esteban"
         },
         {
+          "orden": 2,
+          "local": "Dullys",
+          "visitante": "Eli_as"
+        },
+        {
+          "orden": 3,
+          "local": "Herobrain",
+          "visitante": "Eze23ml"
+        },
+        {
           "orden": 4,
-          "local": "Eli_as",
-          "visitante": "Lyuk"
+          "local": "Nimaben",
+          "visitante": "Lucía"
         },
         {
           "orden": 5,
           "local": "LeonSB",
-          "visitante": "Nimaben"
+          "visitante": "Lyuk"
         }
       ]
     },
@@ -591,28 +609,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Lucía"
+          "local": "Esteban",
+          "visitante": "Dullys"
         },
         {
           "orden": 2,
-          "local": "Eze23ml",
-          "visitante": "Herobrain"
+          "local": "Herobrain",
+          "visitante": "Renuz"
         },
         {
           "orden": 3,
-          "local": "Eli_as",
-          "visitante": "Dullys"
+          "local": "Nimaben",
+          "visitante": "Eli_as"
         },
         {
           "orden": 4,
           "local": "LeonSB",
-          "visitante": "Esteban"
+          "visitante": "Eze23ml"
         },
         {
           "orden": 5,
-          "local": "Nimaben",
-          "visitante": "Lyuk"
+          "local": "Lyuk",
+          "visitante": "Lucía"
         }
       ]
     },
@@ -623,28 +641,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Eze23ml",
-          "visitante": "Renuz"
+          "local": "Herobrain",
+          "visitante": "Esteban"
         },
         {
           "orden": 2,
-          "local": "Eli_as",
-          "visitante": "Lucía"
-        },
-        {
-          "orden": 3,
-          "local": "LeonSB",
-          "visitante": "Herobrain"
-        },
-        {
-          "orden": 4,
           "local": "Nimaben",
           "visitante": "Dullys"
         },
         {
-          "orden": 5,
+          "orden": 3,
+          "local": "LeonSB",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 4,
           "local": "Lyuk",
-          "visitante": "Esteban"
+          "visitante": "Eli_as"
+        },
+        {
+          "orden": 5,
+          "local": "Lucía",
+          "visitante": "Eze23ml"
         }
       ]
     },
@@ -655,28 +673,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Eli_as"
+          "local": "Esteban",
+          "visitante": "Nimaben"
         },
         {
           "orden": 2,
           "local": "LeonSB",
-          "visitante": "Eze23ml"
-        },
-        {
-          "orden": 3,
-          "local": "Nimaben",
-          "visitante": "Lucía"
-        },
-        {
-          "orden": 4,
-          "local": "Lyuk",
           "visitante": "Herobrain"
         },
         {
-          "orden": 5,
-          "local": "Esteban",
+          "orden": 3,
+          "local": "Lyuk",
           "visitante": "Dullys"
+        },
+        {
+          "orden": 4,
+          "local": "Lucía",
+          "visitante": "Renuz"
+        },
+        {
+          "orden": 5,
+          "local": "Eze23ml",
+          "visitante": "Eli_as"
         }
       ]
     },
@@ -688,27 +706,27 @@
         {
           "orden": 1,
           "local": "LeonSB",
-          "visitante": "Renuz"
+          "visitante": "Esteban"
         },
         {
           "orden": 2,
-          "local": "Nimaben",
-          "visitante": "Eli_as"
+          "local": "Lyuk",
+          "visitante": "Nimaben"
         },
         {
           "orden": 3,
-          "local": "Lyuk",
-          "visitante": "Eze23ml"
+          "local": "Lucía",
+          "visitante": "Herobrain"
         },
         {
           "orden": 4,
-          "local": "Esteban",
-          "visitante": "Lucía"
+          "local": "Eze23ml",
+          "visitante": "Dullys"
         },
         {
           "orden": 5,
-          "local": "Dullys",
-          "visitante": "Herobrain"
+          "local": "Eli_as",
+          "visitante": "Renuz"
         }
       ]
     },
@@ -719,28 +737,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Renuz",
-          "visitante": "Nimaben"
+          "local": "Esteban",
+          "visitante": "Lyuk"
         },
         {
           "orden": 2,
-          "local": "Lyuk",
+          "local": "Lucía",
           "visitante": "LeonSB"
         },
         {
           "orden": 3,
-          "local": "Esteban",
-          "visitante": "Eli_as"
+          "local": "Eze23ml",
+          "visitante": "Nimaben"
         },
         {
           "orden": 4,
-          "local": "Dullys",
-          "visitante": "Eze23ml"
+          "local": "Eli_as",
+          "visitante": "Herobrain"
         },
         {
           "orden": 5,
-          "local": "Herobrain",
-          "visitante": "Lucía"
+          "local": "Renuz",
+          "visitante": "Dullys"
         }
       ]
     },
@@ -751,28 +769,28 @@
       "partidos": [
         {
           "orden": 1,
-          "local": "Lyuk",
-          "visitante": "Renuz"
+          "local": "Lucía",
+          "visitante": "Esteban"
         },
         {
           "orden": 2,
-          "local": "Esteban",
-          "visitante": "Nimaben"
+          "local": "Eze23ml",
+          "visitante": "Lyuk"
         },
         {
           "orden": 3,
-          "local": "Dullys",
+          "local": "Eli_as",
           "visitante": "LeonSB"
         },
         {
           "orden": 4,
-          "local": "Herobrain",
-          "visitante": "Eli_as"
+          "local": "Renuz",
+          "visitante": "Nimaben"
         },
         {
           "orden": 5,
-          "local": "Lucía",
-          "visitante": "Eze23ml"
+          "local": "Dullys",
+          "visitante": "Herobrain"
         }
       ]
     }

@@ -50,6 +50,7 @@ const partidoArchivo = z
     local: z.string().min(1),
     visitante: z.string().min(1),
     resultado: z.object({ local: coronas, visitante: coronas }).optional(),
+    nota: z.string().min(3).max(500).optional(),
     walkover: z
       .object({
         ausente: z.string().min(1),
@@ -263,7 +264,7 @@ export async function restaurarTemporada(options: RestaurarOptions): Promise<Res
               await llamar('POST', `/api/v1/admin/matches/${enApi.id}/result`, {
                 homeCrowns: local,
                 awayCrowns: visitante,
-                notes: temporada.notaResultados,
+                notes: partido.nota ?? temporada.notaResultados,
               });
             },
           });
